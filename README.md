@@ -10,13 +10,13 @@ A C library for emulating Minecraft loot table generation
 #include "src/loot_library.h"
 
 int main(void) {
-    init_loot_tables();
+    LootTable table = init_ruined_portal_loot_table();
 
     uint64_t loot_seed = 1111L;
 
     LootItem items[64] = {0};
     size_t num_items;
-    ruined_portal_loot(loot_seed, items, &num_items);
+    ruined_portal_loot(&table, loot_seed, items, &num_items);
 
     for (size_t i = 0; i < num_items; i++) {
         printf("%s x %d\n", item_names[items[i].item], items[i].quantity);

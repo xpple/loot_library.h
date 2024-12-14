@@ -85,8 +85,6 @@ typedef struct {
     int enchant_level;
 } LootItem;
 
-void init_loot_tables();
-
 #endif
 
 #ifdef LOOT_LIBRARY
@@ -171,10 +169,5 @@ LootItem provide_loot_random_enchant(LootTable *table, int item_index, uint64_t 
 
 #define RUINED_PORTAL
 #include "ruined_portal.h"
-
-void init_loot_tables() {
-    //ruined portal
-    init_ruined_portal_loot_table();
-}
 
 #endif

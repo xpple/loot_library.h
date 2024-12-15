@@ -3,6 +3,7 @@ A C library for emulating Minecraft loot table generation
 
 # example
 
+Searching through ruined portal loot seeds.
 ```C
 #include <stdio.h>
 

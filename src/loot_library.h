@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef enum {
+typedef enum Item {
     ITEM_NONE,
     OBSIDIAN, FLINT, IRON_NUGGET, FLINT_AND_STEEL, FIRE_CHARGE, GOLDEN_APPLE, GOLD_NUGGET, GOLDEN_SWORD, GOLDEN_AXE, GOLDEN_HOE, GOLDEN_SHOVEL, GOLDEN_PICKAXE, GOLDEN_BOOTS, GOLDEN_CHESTPLATE, GOLDEN_HELMET, GOLDEN_LEGGINGS, GLISTERING_MELON_SLICE, GOLDEN_HORSE_ARMOR, LIGHT_WEIGHTED_PRESSURE_PLATE, GOLDEN_CARROT, CLOCK, GOLD_INGOT, BELL, ENCHANTED_GOLDEN_APPLE, GOLD_BLOCK      
 } Item;
@@ -15,7 +15,7 @@ static char *item_names[] = {
     "none", "obsidian", "flint", "iron_nugget", "flint_and_steel", "fire_charge", "golden_apple", "gold_nugget", "golden_sword", "golden_axe", "golden_hoe", "golden_shovel", "golden_pickaxe", "golden_boots", "golden_chestplate", "golden_helmet", "golden_leggings", "glistering_melon_slice", "golden_horse_armor", "light_weighted_pressure_plate", "golden_carrot", "clock", "gold_ingot", "bell", "enchanted_golden_apple", "gold_block"
 };
 
-typedef enum {
+typedef enum Enchant {
     ENCHANT_NONE, 
     SHARPNESS, SMITE, BANE_OF_ARTHROPODS, KNOCKBACK, FIRE_ASPECT, LOOTING, 
     SWEEPING, UNBREAKING, MENDING, VANISHING_CURSE, EFFICIENCY, SILK_TOUCH, FORTUNE,
@@ -66,17 +66,17 @@ static int standard_shovel_enchantments[][3] = {
     {EFFICIENCY, 1, 5}, {SILK_TOUCH, 1, 1}, {UNBREAKING, 1, 3}, {FORTUNE, 1, 3}, {MENDING, 1, 1}, {VANISHING_CURSE, 1, 1}
 };
 
-typedef enum {
+typedef enum ItemEnchants {
     NO_ENCHANTS, SWORD_ENCHANTS, AXE_ENCHANTS, PICKAXE_ENCHANTS, HOE_ENCHANTS, BOOTS_ENCHANTS, LEGGINGS_ENCHANTS, CHESTPLATE_ENCHANTS, HELMET_ENCHANTS, SHOVEL_ENCHANTS
 } ItemEnchants;
 
-typedef struct {
+typedef struct LootTable {
     int table_counts[128][2];
     ItemEnchants enchant_table[128];
     Item table[128];
 } LootTable;
 
-typedef struct {
+typedef struct LootItem {
     Item item; 
     int quantity;
 

@@ -1,5 +1,5 @@
 # loot_library.h
-A C library for emulating Minecraft loot table generation
+A C library for emulating Minecraft loot table generation. Still a WIP, API is still subject to sudden changes.
 
 # example
 

@@ -1,6 +1,8 @@
 # loot_library.h
 A C library for emulating Minecraft loot table generation. Still a WIP, API is still subject to sudden changes.
 
+While it's written in C, the entire library can be ported to CUDA very easily if needed.
+
 # example
 
 Searching through ruined portal loot seeds.

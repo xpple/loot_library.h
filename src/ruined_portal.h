@@ -67,9 +67,10 @@ void ruined_portal_loot(LootTable *table, uint64_t loot_seed, LootItem *items, s
 LootTable init_ruined_portal_loot_table() {
     LootTable ruined_portal_table;
     
-    memcpy(ruined_portal_table.table, ruined_portal_loot_table, sizeof(ruined_portal_loot_table));
-    memcpy(ruined_portal_table.table_counts, ruined_portal_loot_table_counts, sizeof(ruined_portal_loot_table_counts));
-    memcpy(ruined_portal_table.enchant_table, ruined_portal_enchant_table, sizeof(ruined_portal_enchant_table));
+    ruined_portal_table.current_table = 0;
+    memcpy(ruined_portal_table.table[0], ruined_portal_loot_table, sizeof(ruined_portal_loot_table));
+    memcpy(ruined_portal_table.table_counts[0], ruined_portal_loot_table_counts, sizeof(ruined_portal_loot_table_counts));
+    memcpy(ruined_portal_table.enchant_table[0], ruined_portal_enchant_table, sizeof(ruined_portal_enchant_table));
 
     return ruined_portal_table;
 }
@@ -81,6 +82,7 @@ void ruined_portal_loot(LootTable *table, uint64_t loot_seed, LootItem *items, s
 
     int rolls = next_int_bounded(&internal, 4, 8);
 
+    table->current_table = 0;
     for (int i = 0; i < rolls; i++) {
         int item = precomputedRPLootTable[next_int(&internal, 398)];
         LootItem loot_item = ruined_portal_loot_providers[item](table, item, &internal);

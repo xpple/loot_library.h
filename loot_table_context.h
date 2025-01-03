@@ -1,11 +1,12 @@
 #pragma once
-
-// Loose draft of the structure of the generalized lot table context
-
 #include <stdint.h>
+
+#include "rng.h"
+
 
 typedef enum MCVersion MCVersion;
 enum MCVersion {
+	undefined,
 	v1_16 // placeholder
 };
 
@@ -28,7 +29,23 @@ struct ItemStack {
 
 typedef struct LootPool LootPool;
 struct LootPool {
-	int holder;
+	// roll count choice function
+	int min_rolls;
+	int max_rolls;
+	int (*roll_count_function)(uint64_t* rand, const int min, const int max);
+
+	// precomputed loot array, which maps possible rng ouputs
+	// to indices of loot entries they correspond to
+	int total_weight;
+	int* precomputed_loot;
+
+	// loot entry arrays
+	int* entry_to_item;				// entryID -> context itemID
+	int* entry_functions_index;		// entryID -> ID of first loot function in functions array
+	int* entry_functions_count;		// entryID -> number of functions applied to the item
+
+	// loot function array, containing all the extra processors that get applied to the item
+	void (**loot_function_array)(uint64_t* rand, ItemStack* itemStack);
 };
 
 typedef struct LootTableContext LootTableContext;
@@ -46,3 +63,17 @@ struct LootTableContext {
 	int generated_item_count;
 	ItemStack generated_items[27]; 
 };
+
+// ----------------------------------------------------------------------------------------
+// Roll count choice functions
+
+inline int roll_count_constant(uint64_t* rand, const int min, const int max)
+{
+	return min;
+}
+
+inline int roll_count_uniform(uint64_t* rand, const int min, const int max)
+{
+	const int bound = max - min + 1;
+	return nextInt(rand, bound) + min;
+}

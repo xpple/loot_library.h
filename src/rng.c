@@ -1,3 +1,5 @@
+#include <inttypes.h>
+
 static inline void set_seed(uint64_t *seed, uint64_t value)
 {
     *seed = (value ^ 0x5deece66d) & ((1ULL << 48) - 1);

@@ -54,28 +54,6 @@ static char* get_no_whitespace_string(const char* str)
 	return no_whitespace;
 }
 
-static int count_pools(const char* table_string)
-{
-	int pool_count = 0;
-	int depth = 0;
-	int len = strlen(table_string);
-
-	for (int i = 0; i < len; i++)
-	{
-		if (table_string[i] == '{')
-		{
-			if (depth == 1)
-				pool_count++;
-			depth++;
-		}
-		else if (table_string[i] == '}')
-		{
-			depth--;
-		}
-	}
-	return pool_count;
-}
-
 static char* substr(const char* str, int start, int end)
 {
 	if (start < 0) return NULL;
@@ -93,7 +71,7 @@ static char* extract_unnamed_object(const char* jsonstr, int index) {
 	int list_depth = 0;
 	int obj_depth = 0;
 	int len = strlen(jsonstr);
-	DEBUG_MSG("extract_unnamed_object got string with len = %d\n", len);
+	// DEBUG_MSG("extract_unnamed_object got string with len = %d\n", len);
 
 	int indexBegin = 0;
 	int indexEnd = 0;
@@ -121,9 +99,11 @@ static char* extract_unnamed_object(const char* jsonstr, int index) {
 		}
 	}
 
-	DEBUG_MSG("indexBegin: %d,  indexEnd: %d\n", indexBegin, indexEnd);
+	// DEBUG_MSG("indexBegin: %d,  indexEnd: %d\n", indexBegin, indexEnd);
 
-	// extract the substring from indexBegin to indexEnd
+	// extract the substring from indexBegin to indexEnd, or return null if the object was not found
+	if (indexBegin == 0 && indexEnd == 0)
+		return NULL;
 	char* extracted = substr(jsonstr, indexBegin, indexEnd);
 	return extracted;
 }
@@ -177,6 +157,23 @@ static char* extract_named_object(const char* jsonstr, const char* key) {
 	return extracted;
 }
 
+static int count_unnamed(const char* jsonarr)
+{
+	int depth = 0;
+	int count = 0;
+	int len = strlen(jsonarr);
+
+	for (int i = 0; i < len; i++) {
+		if (jsonarr[i] == '[' || jsonarr[i] == '{') depth++;
+		else if (jsonarr[i] == ']' || jsonarr[i] == '}') depth--;
+
+		if (jsonarr[i] == '{' && depth == 2) 
+			count++;
+	}
+
+	return count;
+}
+
 static char* get_item_name(const char* value)
 {
 	// remove quotes and "minecraft:" prefix
@@ -213,22 +210,12 @@ static void init_loot_table_items(const char* loot_table_string, LootTableContex
 	}
 }
 
-// private
-static int init_loot_pool(const char* pool_data, const int pool_id, LootTableContext* ctx)
+
+static int init_rolls(const char* pool_data, LootPool* pool)
 {
-	LootPool* pool = &(ctx->loot_pools[pool_id]);
-
-	// this needs to do the heavy lifting:
-	// - create entry arrays, containing all the parsed loot functions
-	// - create precomputed loot tables
-
-	// create roll count function
-
 	char* rolls_field = extract_named_object(pool_data, "rolls"); // 1
 	if (rolls_field == NULL)
-		ERR("Loot pool #%d does not declare a roll choice function", pool_id);
-
-	DEBUG_MSG("POOL #%d:  rolls = %s\n", pool_id, rolls_field);
+		return -1;
 
 	char* minrolls = extract_named_object(rolls_field, "min"); // 2
 	char* maxrolls = extract_named_object(rolls_field, "max"); // 3
@@ -241,9 +228,7 @@ static int init_loot_pool(const char* pool_data, const int pool_id, LootTableCon
 
 		pool->min_rolls = minrolls_i;
 		pool->max_rolls = maxrolls_i;
-		// the rng doesn't step forward if the uniform roll is between two equal values
-		pool->roll_count_function = maxrolls_i != minrolls_i ? roll_count_uniform : roll_count_constant;
-		DEBUG_MSG("POOL #%d:  roll count function = uniform (%d, %d)\n", pool_id, minrolls_i, maxrolls_i);
+		pool->roll_count_function = roll_count_uniform;
 	}
 	else {
 		// constant roll
@@ -252,16 +237,62 @@ static int init_loot_pool(const char* pool_data, const int pool_id, LootTableCon
 		pool->min_rolls = rolls_i;
 		pool->max_rolls = rolls_i;
 		pool->roll_count_function = roll_count_constant;
-		DEBUG_MSG("POOL #%d:  roll count function = constant (%d)\n", pool_id, rolls_i);
 	}
 
 	free(rolls_field); // 0
+	return 0;
+}
+
+// private
+static int init_entry(const char* entry_data, LootPool* pool, const int entry_id, LootTableContext* ctx)
+{
+	// create entry function array
+	// create precomputed loot table
+	// count functions inside entry
+
+	char* functions_field = extract_named_object(entry_data, "functions"); // 1
+	if (functions_field == NULL)
+		ERR("Loot entry #%d does not declare any functions", entry_id);
+
+	int functions = 0;
+	while (1) {
+		char* temp = extract_unnamed_object(functions_field, functions); // 2
+		functions++;
+		if (temp == NULL)
+			break;
+		free(temp); // 1
+	}
+	pool->entry_functions_count[entry_id] = functions;
+
+
+	free(functions_field); // 0
+}
+
+// private
+static int init_loot_pool(const char* pool_data, const int pool_id, LootTableContext* ctx)
+{
+	LootPool* pool = &(ctx->loot_pools[pool_id]);
+
+	int ret = init_rolls(pool_data, pool);
+	if (ret != 0)
+		ERR("Loot pool #%d does not declare a roll choice function", pool_id);
 
 	// count entries inside loot table
 
 	char* entries_field = extract_named_object(pool_data, "entries"); // 1
 	if (entries_field == NULL)
 		ERR("Loot pool #%d does not declare any entries", pool_id);
+	pool->entry_count = count_unnamed(entries_field);
+
+	// create the entries
+
+	for (int i = 0; i < pool->entry_count; i++) {
+		char* entry_data = extract_unnamed_object(entries_field, i); // 2
+		DEBUG_MSG("POOL #%d:  ENTRY #%d:  %s\n", pool_id, i, entry_data);
+		init_entry(entry_data, pool, i, ctx);
+		free(entry_data); // 1
+	}
+
 	free(entries_field); // 0
 }
 
@@ -305,7 +336,7 @@ int init_loot_table(const char* filename, LootTableContext* context, const MCVer
 
 	init_loot_table_items(loot_table_string, context);
 
-	int pool_count = count_pools(loot_table_string);
+	int pool_count = count_unnamed(loot_table_string);
 	context->pool_count = pool_count;
 	context->loot_pools = (LootPool*)malloc(pool_count * sizeof(LootPool));
 

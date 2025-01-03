@@ -28,7 +28,7 @@ struct ItemStack {
 
 typedef struct LootPool LootPool;
 struct LootPool {
-
+	int holder;
 };
 
 typedef struct LootTableContext LootTableContext;
@@ -42,9 +42,7 @@ struct LootTableContext {
 	LootPool* loot_pools;
 
 	// holding data related with generating the loot table within the context is a debatable idea
-	uint64_t state;
-	uint64_t* const rand = &state;
-
+	uint64_t prng_state;
 	int generated_item_count;
 	ItemStack generated_items[27]; 
 };

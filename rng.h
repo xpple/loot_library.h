@@ -94,6 +94,11 @@ static inline int next(uint64_t *seed, const int bits)
     return (int) ((int64_t)*seed >> (48 - bits));
 }
 
+static inline void nextSeed(uint64_t* seed)
+{
+	*seed = (*seed * 0x5deece66d + 0xb) & ((1ULL << 48) - 1);
+}
+
 static inline int nextInt(uint64_t *seed, const int n)
 {
     int bits, val;

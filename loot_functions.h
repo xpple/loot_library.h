@@ -1,4 +1,5 @@
 #pragma once
+#include <inttypes.h>
 
 // ----------------------------------------------------------------------------------------
 
@@ -47,7 +48,7 @@ typedef int (*RollCountFunction)(uint64_t*, const int, const int);
 typedef struct LootFunction LootFunction;
 struct LootFunction {
 	// actual function pointer
-	void (*fun)(uint64_t* rand, ItemStack* is, int params[4]);
+	void (*fun)(uint64_t* rand, ItemStack* is, const int params[4]);
 	// predefined function parameter array
 	int params[4];
 };
@@ -79,3 +80,5 @@ void create_enchant_with_levels(LootFunction* lf, const ItemType item, const int
 void create_enchant_randomly(LootFunction* lf, const ItemType item, const int isTreasure);
 void create_set_count(LootFunction* lf, const int min, const int max);
 void create_set_damage(LootFunction* lf);
+void create_skip_calls(LootFunction* lf, const int skip_count);
+void create_no_op(LootFunction* lf);

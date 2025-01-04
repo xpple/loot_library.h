@@ -137,21 +137,26 @@ static char* extract_named_object(const char* jsonstr, const char* key) {
 	}
 
 	int length = 0;
-	int depth = 0;
+	int depth = 1;
 
 	// find the number of characters in the object
-	while (depth >= 0) {
+	while (depth > 0) {
 		length++;
 		const char c = keyPos[length];
 		if (c == incDepth) depth++;
 		if (c == decDepth) depth--;
 
 		// handle cases where it's just a key-value pair
-		if (c == ',' || (incDepth == 0 && (c == '}' || c == ']'))) {
+		if (incDepth == 0 && c == ',') {
+			length--;
+			break;
+		}
+		if (incDepth == 0 && (c == '}' || c == ']')) {
 			length--;
 			break;
 		}
 	}
+	//DEBUG_MSG("extracting substring of length: %d\n", length);
 
 	// extract the substring
 	char* extracted = substr(keyPos, 0, length);
@@ -233,16 +238,22 @@ static void init_loot_table_items(const char* loot_table_string, LootTableContex
 		cursor++; // won't find the previous key now
 	}
 
+	DEBUG_MSG("Found %d distinct items\n", ctx->item_count);
+
 	// allocate memory for item names
 	ctx->item_names = (char**)malloc(ctx->item_count * sizeof(char*));
 	
 	// fill the array
+	cursor = loot_table_string;
+
 	for (int i = 0; i < ctx->item_count; i++) {
 		char* val = extract_named_object(cursor, "name");
 		char* name = get_item_name(val);
 		free(val);
 		ctx->item_names[i] = name;
-		cursor = strstr(cursor, "\"name\":") + 1;
+		DEBUG_MSG("Item %d: %s\n", i, name);
+
+		cursor = strstr(cursor, "\"name\":") + 2;
 	}
 }
 
@@ -275,8 +286,10 @@ static int init_rolls(const char* pool_data, LootPool* pool)
 static void map_entry_to_item(const char* entry_data, LootTableContext* ctx, int* item_id)
 {
 	char* name_field = extract_named_object(entry_data, "name"); // 1
-	if (name_field == NULL) 
-		return; // empty entry
+	if (name_field == NULL) {
+		*item_id = -1; // empty entry
+		return; 
+	}
 
 	char* iname = get_item_name(name_field); // 2
 	for (int i = 0; i < ctx->item_count; i++) {
@@ -290,13 +303,15 @@ static void map_entry_to_item(const char* entry_data, LootTableContext* ctx, int
 }
 
 // private
-static int init_entry(const char* entry_data, LootPool* pool, const int entry_id, LootTableContext* ctx)
+static void init_entry(const char* entry_data, LootPool* pool, const int entry_id, LootTableContext* ctx)
 {
+	int functions = 0;
+
 	char* functions_field = extract_named_object(entry_data, "functions"); // 1
-	if (functions_field == NULL)
-		ERR("Loot entry #%d does not declare any functions", entry_id);
-	int functions = count_unnamed(functions_field);
-	free(functions_field); // 0
+	if (functions_field != NULL) {
+		functions = count_unnamed(functions_field);
+		free(functions_field); // 0
+	}
 
 	int w = extract_int(entry_data, "weight", 1);
 	pool->total_weight += w;
@@ -319,11 +334,11 @@ static int init_entry(const char* entry_data, LootPool* pool, const int entry_id
 }
 
 // private
-static int init_entry_functions(const char* entry_data, LootPool* pool, const int entry_id, LootTableContext* ctx)
+static void init_entry_functions(const char* entry_data, LootPool* pool, const int entry_id, LootTableContext* ctx)
 {
 	char* functions_field = extract_named_object(entry_data, "functions"); // 1
 	if (functions_field == NULL)
-		ERR("Loot entry #%d does not declare any functions", entry_id);
+		return 0;
 	
 	int findex = pool->entry_functions_index[entry_id];
 	int fcount = pool->entry_functions_count[entry_id];
@@ -358,6 +373,7 @@ static int init_entry_functions(const char* entry_data, LootPool* pool, const in
 	}
 
 	free(functions_field); // 0
+	return 0;
 }
 
 // private
@@ -381,17 +397,20 @@ static void precompute_loot_pool(LootPool* pool, const char* entries_field)
 // private
 static int init_loot_pool(const char* pool_data, const int pool_id, LootTableContext* ctx)
 {
+	DEBUG_MSG("Initializing loot pool %d\n", pool_id);
+
 	LootPool* pool = &(ctx->loot_pools[pool_id]);
+	pool->total_weight = 0;
 
 	int ret = init_rolls(pool_data, pool);
 	if (ret != 0)
-		ERR("Loot pool #%d does not declare a roll choice function", pool_id);
+		ERR("Loot pool %d does not declare a roll choice function", pool_id);
 
 	// count entries inside loot table
 
 	char* entries_field = extract_named_object(pool_data, "entries"); // 1
 	if (entries_field == NULL)
-		ERR("Loot pool #%d does not declare any entries", pool_id);
+		ERR("Loot pool %d does not declare any entries", pool_id);
 	pool->entry_count = count_unnamed(entries_field);
 
 	// create the entries
@@ -404,7 +423,7 @@ static int init_loot_pool(const char* pool_data, const int pool_id, LootTableCon
 	// first pass: count total loot functions and create simple entry mappings
 	for (int i = 0; i < pool->entry_count; i++) {
 		char* entry_data = extract_unnamed_object(entries_field, i); // 2
-		DEBUG_MSG("POOL #%d:  ENTRY #%d:  %s\n", pool_id, i, entry_data);
+		DEBUG_MSG("POOL %d:  ENTRY %d\n", pool_id, i);
 		init_entry(entry_data, pool, i, ctx);
 		free(entry_data); // 1
 	}
@@ -424,16 +443,39 @@ static int init_loot_pool(const char* pool_data, const int pool_id, LootTableCon
 
 	// final pass: precompute loot table
 	pool->precomputed_loot = (int*)malloc(pool->total_weight * sizeof(int));
-	if (pool->precomputed_loot == NULL)
-		ERR("Could not allocate memory for precomputed loot table");
-
+	if (pool->precomputed_loot == NULL) {
+		DEBUG_MSG("Total weight: %d\n", pool->total_weight);
+		ERR("Could not allocate memory for precomputed loot table\n");
+	}
+	
+	DEBUG_MSG("Precomputing pool %d ->\n", pool_id);
 	precompute_loot_pool(pool, entries_field);
+	DEBUG_MSG("-> done, total weight = %d\n\n", pool->total_weight);
 
 	free(entries_field); // 0
+
+	return 0;
 }
+
+// private
+static void free_loot_pool(LootPool* pool)
+{
+	free(pool->precomputed_loot);
+
+	free(pool->entry_to_item);
+	free(pool->entry_functions_index);
+	free(pool->entry_functions_count);
+
+	free(pool->loot_functions);
+}
+
+// -------------------------------------------------------------------------------------
+// the public API
 
 int init_loot_table(const char* filename, LootTableContext* context, const MCVersion version)
 {
+	DEBUG_MSG("Parsing loot table %s\n", filename);
+
 	context->version = version;
 	if (version == undefined)
 		ERR("Can't parse loot table for undefined version");
@@ -470,39 +512,42 @@ int init_loot_table(const char* filename, LootTableContext* context, const MCVer
 
 	// ----------------------------------------------
 
+	DEBUG_MSG("Initializing item name array ---\n");
+
 	init_loot_table_items(loot_table_string, context);
 
-	int pool_count = count_unnamed(loot_table_string);
+	DEBUG_MSG("--- done!\n");
+
+	// ----------------------------------------------
+
+	DEBUG_MSG("Initializing loot pools...\n");
+
+	char* pools_field = extract_named_object(loot_table_string, "pools"); // 2
+	if (pools_field == NULL)
+		ERR("Loot table does not declare any pools");
+
+	int pool_count = count_unnamed(pools_field);
 	context->pool_count = pool_count;
 	context->loot_pools = (LootPool*)malloc(pool_count * sizeof(LootPool));
 
-	char* pools_field = extract_named_object(loot_table_string, "pools"); // 2
+	DEBUG_MSG("Creating %d loot pools\n", context->pool_count);
 
 	for (int pool_id = 0; pool_id < pool_count; pool_id++) {
 		char* pool_data = extract_unnamed_object(pools_field, pool_id); // 3
-		DEBUG_MSG("%s\n\n", pool_data);
+		//DEBUG_MSG("%s\n\n", pools_field);
 
-		init_loot_pool(pool_data, pool_id, context);
+		int ret = init_loot_pool(pool_data, pool_id, context);
+		if (ret != 0)
+			ERR("Error while initializing loot pool #%d", pool_id);
+
 		free(pool_data); // 2
 	}
+
+	DEBUG_MSG("All loot pools were parsed succesfully\n");
 
 	free(pools_field); // 1
 	free(loot_table_string); // 0
 	return 0;
-}
-
-// -------------------------------------------------------------------------------------
-
-// private
-static void free_loot_pool(LootPool* pool)
-{
-	free(pool->precomputed_loot);
-
-	free(pool->entry_to_item);
-	free(pool->entry_functions_index);
-	free(pool->entry_functions_count);
-
-	free(pool->loot_functions);
 }
 
 void free_loot_table(LootTableContext* context)

@@ -1,8 +1,17 @@
 ﻿  loot_table_parser.c
-C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(42,3): warning C4047: "return": "char *" różni się w poziomach operatorów pośrednich od "int"
-C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(39,12): warning C4267: "inicjowanie": konwersja z "size_t" do "int", możliwa utrata danych
-C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(61,12): warning C4267: "inicjowanie": konwersja z "size_t" do "int", możliwa utrata danych
-C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(84,2): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(95,12): warning C4267: "inicjowanie": konwersja z "size_t" do "int", możliwa utrata danych
-C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(196,13): warning C4267: "inicjowanie": konwersja z "size_t" do "int", możliwa utrata danych
+C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(43,3): warning C4047: "return": "char *" różni się w poziomach operatorów pośrednich od "int"
+C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(40,12): warning C4267: "inicjowanie": konwersja z "size_t" do "int", możliwa utrata danych
+C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(63,2): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(74,12): warning C4267: "inicjowanie": konwersja z "size_t" do "int", możliwa utrata danych
+C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(170,12): warning C4267: "inicjowanie": konwersja z "size_t" do "int", możliwa utrata danych
+C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(186,51): warning C4267: "funkcja": konwersja z "size_t" do "int", możliwa utrata danych
+C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(209,3): warning C4098: "parse_set_count": funkcja "void" zwraca wartość
+C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(247,9): warning C4090: „=”: różne kwalifikatory „const”
+C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(230,8): warning C4090: „inicjowanie”: różne kwalifikatory „const”
+C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(341,3): warning C4098: "init_entry_functions": funkcja "void" zwraca wartość
+C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(376,2): warning C4098: "init_entry_functions": funkcja "void" zwraca wartość
+C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(407,3): warning C4002: zbyt wiele argumentów wywołania makra podobnego do funkcji „ERR”
+C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(413,3): warning C4002: zbyt wiele argumentów wywołania makra podobnego do funkcji „ERR”
+C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(541,4): warning C4002: zbyt wiele argumentów wywołania makra podobnego do funkcji „ERR”
+C:\Users\kludw\source\repos\loot_library.h\loot_table_parser.c(500,13): warning C4267: "inicjowanie": konwersja z "size_t" do "int", możliwa utrata danych
   LootLibrary.vcxproj -> C:\Users\kludw\source\repos\loot_library.h\x64\Debug\LootLibrary.exe

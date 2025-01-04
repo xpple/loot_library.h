@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#define ENABLE_DEBUG_MESSAGES 0
+#define ENABLE_DEBUG_MESSAGES 1
 
 #define DEBUG_MSG(...) { \
 	if (ENABLE_DEBUG_MESSAGES) { \

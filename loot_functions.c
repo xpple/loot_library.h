@@ -31,6 +31,21 @@ static void no_op_function(uint64_t* rand, ItemStack* is, const int params[4])
 	// do nothing
 }
 
+// enchantments
+
+static void set_enchantment_random_level(uint64_t* rand, ItemStack* is, const int params[4])
+{
+	// params[0] - enchantment id
+	// params[1] - min level
+	// params[2] - max level
+
+	is->enchantment_count = 1;
+	is->enchantments[0].enchantment = params[0];
+
+	nextSeed(rand); // choose a "random" enchantment, nextInt(1) call
+	const int bound = params[2] - params[1] + 1;
+	is->enchantments[0].level = nextInt(rand, bound) + params[1];
+}
 
 
 // ----------------------------------------------------------------------------------------

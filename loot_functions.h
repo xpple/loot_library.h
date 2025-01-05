@@ -4,27 +4,8 @@
 // ----------------------------------------------------------------------------------------
 
 typedef enum MCVersion MCVersion;
-enum MCVersion {
-	undefined,
-	v1_16 // placeholder
-};
-
 typedef enum ItemType ItemType;
-enum ItemType {
-	SWORD,
-	PICKAXE,
-	SHOVEL,
-	AXE,
-	HOE,
-	HELMET,
-	CHESTPLATE,
-	LEGGINGS,
-	BOOTS,
-	BOW,
-	CROSSBOW,
-	TRIDENT,
-	BOOK
-};
+typedef enum Enchantment Enchantment;
 
 typedef struct EnchantInstance EnchantInstance;
 struct EnchantInstance {
@@ -70,9 +51,7 @@ inline int roll_count_uniform(uint64_t* rand, const int min, const int max)
 // ----------------------------------------------------------------------------------------
 // Loot function initializers
 
-// TODO add everything:
-// item count rolls
-// durability rolls
+// TODO
 // random enchant
 // enchant with levels
 
@@ -82,3 +61,110 @@ void create_set_count(LootFunction* lf, const int min, const int max);
 void create_set_damage(LootFunction* lf);
 void create_skip_calls(LootFunction* lf, const int skip_count);
 void create_no_op(LootFunction* lf);
+
+// ----------------------------------------------------------------------------------------
+// Enums
+
+enum MCVersion {
+	v1_13,
+	v1_14,
+	v1_15,
+	v1_16,
+	v1_17,
+	v1_18,
+	v1_19,
+	v1_20,
+	v1_21
+};
+
+enum ItemType {
+	HELMET,
+	CHESTPLATE,
+	LEGGINGS,
+	BOOTS,
+	SWORD,
+	PICKAXE,
+	SHOVEL,
+	AXE,
+	HOE,
+	FISHING_ROD,
+	BOW,
+	CROSSBOW,
+	TRIDENT,
+	MACE,
+	BOOK
+};
+
+enum Enchantment {
+	NO_ENCHANTMENT = 0,
+
+	// armor
+
+	PROTECTION,
+	FIRE_PROTECTION,
+	BLAST_PROTECTION,
+	PROJECTILE_PROTECTION,
+	RESPIRATION,
+	AQUA_AFFINITY,
+	THORNS,
+	SWIFT_SNEAK,
+	FEATHER_FALLING,
+	DEPTH_STRIDER,
+	FROST_WALKER,
+	SOUL_SPEED,
+
+	// swords
+
+	SHARPNESS,
+	SMITE,
+	BANE_OF_ARTHROPODS,
+	KNOCKBACK,
+	FIRE_ASPECT,
+	LOOTING,
+	SWEEPING_EDGE,
+
+	// tools
+
+	EFFICIENCY,
+	SILK_TOUCH,
+	FORTUNE,
+
+	// fishing rods
+
+	LUCK_OF_THE_SEA,
+	LURE,
+
+	// bows
+
+	POWER,
+	PUNCH,
+	FLAME,
+	INFINITY,
+
+	// crossbows
+
+	QUICK_CHARGE,
+	MULTISHOT,
+	PIERCING,
+
+	// tridents
+
+	IMPALING,
+	RIPTIDE,
+	LOYALTY,
+	CHANNELING,
+
+	// maces
+
+	DENSITY,
+	BREACH,
+	WIND_BURST,
+
+	// general
+
+	MENDING,
+	UNBREAKING,
+	CURSE_OF_VANISHING,
+	CURSE_OF_BINDING
+};
+

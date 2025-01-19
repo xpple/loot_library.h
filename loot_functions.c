@@ -4,36 +4,36 @@
 // ----------------------------------------------------------------------------------------
 // the actual loot functions
 
-static void set_count_uniform_function(uint64_t* rand, ItemStack* is, const int params[4])
+static void set_count_uniform_function(uint64_t* rand, ItemStack* is, const int* params)
 {
 	const int bound = params[1] - params[0] + 1;
 	const int cnt = nextInt(rand, bound) + params[0];
 	is->count = cnt;
 }
 
-static void set_count_constant_function(uint64_t* rand, ItemStack* is, const int params[4])
+static void set_count_constant_function(uint64_t* rand, ItemStack* is, const int* params)
 {
 	is->count = params[0];
 }
 
-static void skip_n_calls_function(uint64_t* rand, ItemStack* is, const int params[4])
+static void skip_n_calls_function(uint64_t* rand, ItemStack* is, const int* params)
 {
 	skipNextN(rand, params[0]);
 }
 
-static void skip_one_call_function(uint64_t* rand, ItemStack* is, const int params[4])
+static void skip_one_call_function(uint64_t* rand, ItemStack* is, const int* params)
 {
 	nextSeed(rand);
 }
 
-static void no_op_function(uint64_t* rand, ItemStack* is, const int params[4])
+static void no_op_function(uint64_t* rand, ItemStack* is, const int* params)
 {
 	// do nothing
 }
 
 // enchantments
 
-static void set_enchantment_random_level(uint64_t* rand, ItemStack* is, const int params[4])
+static void set_enchantment_random_level_function(uint64_t* rand, ItemStack* is, const int* params)
 {
 	// params[0] - enchantment id
 	// params[1] - min level
@@ -43,28 +43,35 @@ static void set_enchantment_random_level(uint64_t* rand, ItemStack* is, const in
 	is->enchantments[0].enchantment = params[0];
 
 	nextSeed(rand); // choose a "random" enchantment, nextInt(1) call
-	const int bound = params[2] - params[1] + 1;
-	is->enchantments[0].level = nextInt(rand, bound) + params[1];
+	const int bound = params[2];
+	is->enchantments[0].level = nextInt(rand, bound) + 1;
 }
 
+static void enchant_randomly_function(uint64_t* rand, ItemStack* is, const int* params)
+{
+	// params[0] - number of enchantments
+	// params[2k + 1] - enchantment id
+	// params[2k + 2] - nextInt bound for the enchantment level choice
+
+	int numEnchants = params[0];
+
+	is->enchantment_count = 1;
+
+	int enchantmentID = nextInt(rand, numEnchants);
+	is->enchantments[0].enchantment = params[2 * enchantmentID + 1];
+
+	int enchantmentLevel = nextInt(rand, params[2 * enchantmentID + 2]) + 1;
+	is->enchantments[0].level = enchantmentLevel;
+}
 
 // ----------------------------------------------------------------------------------------
 // function creators
 
-void create_enchant_with_levels(LootFunction* lf, const ItemType item, const int min_level, const int max_level, const int isTreasure)
-{
-	// TODO: implement
-	lf->fun = no_op_function;
-}
-
-void create_enchant_randomly(LootFunction* lf, const ItemType item, const int isTreasure)
-{
-	// TODO: implement
-	lf->fun = no_op_function;
-}
 
 void create_set_count(LootFunction* lf, const int min, const int max)
 {
+	lf->params = (int*)malloc(2 * sizeof(int));
+
 	lf->params[0] = min;
 	lf->params[1] = max;
 
@@ -86,6 +93,8 @@ void create_set_damage(LootFunction* lf)
 
 void create_skip_calls(LootFunction* lf, const int skip_count)
 {
+	lf->params = (int*)malloc(sizeof(int));
+
 	lf->params[0] = skip_count;
 
 	if (skip_count == 1)
@@ -100,11 +109,12 @@ void create_skip_calls(LootFunction* lf, const int skip_count)
 
 void create_no_op(LootFunction* lf)
 {
+	lf->params = NULL;
 	lf->fun = no_op_function;
 }
 
 // ----------------------------------------------------------------------------------------
-// Enchantment functions
+//  Enchantment functions
 
 static int is_applicable(const Enchantment enchantment, const ItemType item)
 {
@@ -232,7 +242,8 @@ static int get_applicable_enchantments(const ItemType item, const MCVersion vers
 	{
 		if (is_applicable(order[i], item))
 		{
-			enchantments[j] = order[i];
+			if (enchantments != NULL)
+				enchantments[j] = order[i];
 			j++;
 		}
 		i++;
@@ -241,12 +252,32 @@ static int get_applicable_enchantments(const ItemType item, const MCVersion vers
 	return j; // return the number of applicable enchantments
 }
 
-// ----------------------------------------------------------------------------------------
+//  Enchantment function creators
 
-void create_enchant_randomly(LootFunction* lf, const ItemType item, const int isTreasure)
+void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const ItemType item, const int min_level, const int max_level, const int isTreasure)
 {
-	lf->fun = set_enchantment_random_level;
-	lf->params[0] = item;
-	lf->params[1] = 1; // min level
-	lf->params[2] = 5; // max level
+	// TODO: implement
+	create_no_op(lf);
+}
+
+void create_enchant_randomly_one_echant(LootFunction* lf, const Enchantment enchantment)
+{
+	lf->params = (int*)malloc(2 * sizeof(int));
+
+	lf->params[0] = enchantment;
+	lf->params[1] = get_max_level(enchantment);
+
+	lf->fun = set_enchantment_random_level_function;
+}
+
+void create_enchant_randomly(LootFunction* lf, const MCVersion version, const ItemType item, const int isTreasure)
+{
+	int enchantCount = get_applicable_enchantments(item, version, NULL);
+
+	lf->params = (int*)malloc((2 * enchantCount + 1) * sizeof(int));
+
+	lf->params[0] = enchantCount;
+	get_applicable_enchantments(item, version, lf->params + 1);
+
+	lf->fun = enchant_randomly_function;
 }

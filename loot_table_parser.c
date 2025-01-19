@@ -463,8 +463,17 @@ static void free_loot_pool(LootPool* pool)
 	free(pool->precomputed_loot);
 
 	free(pool->entry_to_item);
+	
+	int last = pool->entry_count - 1;
+	int functionCount = pool->entry_functions_index[last] + pool->entry_functions_count[last];
 	free(pool->entry_functions_index);
 	free(pool->entry_functions_count);
+
+	for (int i = 0; i < functionCount; i++)
+	{
+		if (pool->loot_functions[i].params != NULL)
+			free(pool->loot_functions[i].params);
+	}
 
 	free(pool->loot_functions);
 }

@@ -29,9 +29,9 @@ typedef int (*RollCountFunction)(uint64_t*, const int, const int);
 typedef struct LootFunction LootFunction;
 struct LootFunction {
 	// actual function pointer
-	void (*fun)(uint64_t* rand, ItemStack* is, const int params[4]);
+	void (*fun)(uint64_t* rand, ItemStack* is, const int* params);
 	// predefined function parameter array
-	int params[4];
+	int* params;
 };
 
 // ----------------------------------------------------------------------------------------

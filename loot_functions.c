@@ -71,48 +71,43 @@ static void enchant_randomly_function(uint64_t* rand, ItemStack* is, const void*
 	is->enchantments[0].level = enchantmentLevel;
 }
 
+// enchant with levels helpers
+
 static inline int java_round_positive(float f)
 {
 	// this should be good enough to emulate Math.round
 	return (int)floor(f + 0.5F);
 }
 
+static inline int choose_enchantment(uint64_t* rand, int enchantmentVec[], const int vecSize, const int totalWeight)
+{
+	int w = nextInt(rand, totalWeight);
+	for (int i = 2; i < vecSize; i += 3)
+	{
+		w -= enchantmentVec[i];
+		if (w < 0) 
+			return i - 2;
+	}
+	return vecSize - 3;
+}
+
+static inline void remove_incompatible_enchantments()
+{
+
+}
+
 static void enchant_with_levels_function(uint64_t* rand, ItemStack* is, const void* params)
 {
-	// from mc_feature_java:
-	/*
-	ArrayList<EnchantmentInstance> res = new ArrayList<>();
-	Item item = itemStack.getItem();
-	int enchantmentValue;
-	if(enchantments.containsKey(item.getName())) {
-		enchantmentValue = enchantments.get(item.getName());
-	} else {
-		return res;
-	}
-	level += 1 + lootContext.nextInt(enchantmentValue / 4 + 1) + lootContext.nextInt(enchantmentValue / 4 + 1);
-	float amplifier = (lootContext.nextFloat() + lootContext.nextFloat() - 1.0f) * 0.15f;
-	level = Mth.clamp(Math.round((float)level + (float)level * amplifier), 1, Integer.MAX_VALUE);
-	ArrayList<EnchantmentInstance> availableEnchantments = getAvailableEnchantmentResults(level);
-	if(!availableEnchantments.isEmpty()) {
-		res.add(EnchantmentInstance.getRandomItem(lootContext, availableEnchantments));
-		while(lootContext.nextInt(50) <= level) {
-			Enchantments.filterCompatibleEnchantments(availableEnchantments, res.get(res.size() - 1));
-			if(availableEnchantments.isEmpty()) break;
-			res.add(EnchantmentInstance.getRandomItem(lootContext, availableEnchantments));
-			level /= 2;
-		}
-	}
-	return res;
-	*/
-
 	const int** varparams_int_arr = (const int**)params;
 	// params[0][0] - item enchantability
 	// params[0][1] - min levels
 	// params[0][2] - max levels
 	// 
 	// params[i][0]	- number of applicable enchantment instances
-	// params[i][2k + 1] - enchantment id
-	// params[i][2k + 2] - enchantment level
+	// params[i][1] - total weight of the enchantment instances
+	// params[i][3k + 2] - enchantment id
+	// params[i][3k + 3] - enchantment level
+	// params[i][3k + 4] - enchantment weight
 
 	const int enchantability = varparams_int_arr[0][0];
 	const int minLevel = varparams_int_arr[0][1];
@@ -125,7 +120,32 @@ static void enchant_with_levels_function(uint64_t* rand, ItemStack* is, const vo
 	const float amplifier = (nextFloat(rand) + nextFloat(rand) - 1.0F) * 0.15F;
 	level = java_round_positive((float)level + (float)level * amplifier);
 
-	const int* applicableEnchantments = varparams_int_arr[level];
+	// copy the available enchantment results to a local array
+	is->enchantment_count = 0;
+	int vecSize = varparams_int_arr[level][0];
+	int totalWeight = varparams_int_arr[level][1];
+	if (vecSize == 0) return; // no enchantments available
+	
+	int enchantmentVec[128]; // holds triples (id, level, weight), max 42 * 3 = 126 elements
+	memcpy(enchantmentVec, varparams_int_arr[level] + 2, sizeof(int) * vecSize * 3);
+
+	int index = choose_enchantment(rand, enchantmentVec, vecSize, totalWeight);
+	is->enchantments[0].enchantment = enchantmentVec[index];
+	is->enchantments[0].level = enchantmentVec[index + 1];
+	is->enchantment_count++;
+
+	while (nextInt(rand, 50) <= level)
+	{
+		remove_incompatible_enchantments(); // TODO implement
+		if (vecSize == 0) break;
+
+		int index = choose_enchantment(rand, enchantmentVec, vecSize, totalWeight);
+		is->enchantments[is->enchantment_count].enchantment = enchantmentVec[index];
+		is->enchantments[is->enchantment_count].level = enchantmentVec[index + 1];
+		is->enchantment_count++;
+
+		level /= 2;
+	}
 }
 
 // ----------------------------------------------------------------------------------------

@@ -145,7 +145,7 @@ enum Enchantment {
 	POWER,
 	PUNCH,
 	FLAME,
-	INFINITY,
+	INFINITY_BOW,
 
 	// crossbows
 

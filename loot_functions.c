@@ -91,9 +91,75 @@ static inline int choose_enchantment(uint64_t* rand, int enchantmentVec[], const
 	return vecSize - 3;
 }
 
-static inline void remove_incompatible_enchantments()
+static int IS_INCOMPATIBLE_ENCHANT[64][64];
+static void fill_incompatible_enchantments()
 {
+	for (int i = 0; i < 64; i++)
+	{
+		for (int j = 0; j < 64; j++)
+		{
+			IS_INCOMPATIBLE_ENCHANT[i][j] = i == j;
+		}
+	}
 
+	int protections[] = { PROTECTION, FIRE_PROTECTION, BLAST_PROTECTION, PROJECTILE_PROTECTION };
+	for (int i = 0; i < 4; i++)
+		for (int j = 0; j < 4; j++)
+			IS_INCOMPATIBLE_ENCHANT[protections[i]][protections[j]] = 1;
+
+	int sharpnesses[] = { SHARPNESS, SMITE, BANE_OF_ARTHROPODS };
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			IS_INCOMPATIBLE_ENCHANT[sharpnesses[i]][sharpnesses[j]] = 1;
+
+	int fortunes[] = { FORTUNE, LUCK_OF_THE_SEA, LOOTING };
+	for (int i = 0; i < 3; i++)
+	{
+		IS_INCOMPATIBLE_ENCHANT[fortunes[i]][SILK_TOUCH] = 1;
+		IS_INCOMPATIBLE_ENCHANT[SILK_TOUCH][fortunes[i]] = 1;
+	}
+
+	IS_INCOMPATIBLE_ENCHANT[DEPTH_STRIDER][FROST_WALKER] = 1;
+	IS_INCOMPATIBLE_ENCHANT[FROST_WALKER][DEPTH_STRIDER] = 1;
+
+	IS_INCOMPATIBLE_ENCHANT[MENDING][INFINITY_BOW] = 1;
+	IS_INCOMPATIBLE_ENCHANT[INFINITY_BOW][MENDING] = 1;
+
+	IS_INCOMPATIBLE_ENCHANT[RIPTIDE][CHANNELING] = 1;
+	IS_INCOMPATIBLE_ENCHANT[CHANNELING][RIPTIDE] = 1;
+	IS_INCOMPATIBLE_ENCHANT[RIPTIDE][LOYALTY] = 1;
+	IS_INCOMPATIBLE_ENCHANT[LOYALTY][RIPTIDE] = 1;
+
+	IS_INCOMPATIBLE_ENCHANT[PIERCING][MULTISHOT] = 1;
+	IS_INCOMPATIBLE_ENCHANT[MULTISHOT][PIERCING] = 1;
+
+	IS_INCOMPATIBLE_ENCHANT[DENSITY][BREACH] = 1;
+	IS_INCOMPATIBLE_ENCHANT[BREACH][DENSITY] = 1;
+}
+
+static inline void remove_incompatible_enchantments(int enchantmentIndex, int enchantVec[], int* vecSize, int* totalWeight)
+{
+	int enchantmentID = enchantVec[enchantmentIndex];
+
+	int i = 0;
+	int moveBack = 0;
+
+	while (i < *vecSize)
+	{
+		const int ix = 3 * i;
+		if (moveBack > 0)
+			memcpy(enchantVec + ix - moveBack, enchantVec + ix, sizeof(int) * 3);
+
+		if (IS_INCOMPATIBLE_ENCHANT[enchantmentID][enchantVec[i]])
+		{
+			*totalWeight -= enchantVec[ix + 2]; // subtract the weight of removed enchantment
+			moveBack += 3; // make it so that all the following elements are moved back
+		}
+		
+		i++;
+	}
+
+	*vecSize -= (moveBack / 3); // shrink the vector
 }
 
 static void enchant_with_levels_function(uint64_t* rand, ItemStack* is, const void* params)
@@ -136,10 +202,10 @@ static void enchant_with_levels_function(uint64_t* rand, ItemStack* is, const vo
 
 	while (nextInt(rand, 50) <= level)
 	{
-		remove_incompatible_enchantments(); // TODO implement
+		remove_incompatible_enchantments(index, enchantmentVec, &vecSize, &totalWeight); // TODO implement
 		if (vecSize == 0) break;
 
-		int index = choose_enchantment(rand, enchantmentVec, vecSize, totalWeight);
+		index = choose_enchantment(rand, enchantmentVec, vecSize, totalWeight);
 		is->enchantments[is->enchantment_count].enchantment = enchantmentVec[index];
 		is->enchantments[is->enchantment_count].level = enchantmentVec[index + 1];
 		is->enchantment_count++;

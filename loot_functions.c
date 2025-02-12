@@ -419,12 +419,44 @@ void create_enchant_randomly(LootFunction* lf, const MCVersion version, const It
 	int enchantCount = get_applicable_enchantments(item, version, NULL);
 
 	lf->params = (int*)malloc((2 * enchantCount + 1) * sizeof(int));
-
 	lf->params[0] = enchantCount;
-	get_applicable_enchantments(item, version, lf->params + 1);
+
+	int applicable[64];
+	get_applicable_enchantments(item, version, applicable);
+
+	// copy applicable enchants, along with their max levels
+	for (int i = 0; i < enchantCount; i++)
+	{
+		lf->params[1 + 2*i] = applicable[i];
+		lf->params[1 + 2*i + 1] = get_max_level(applicable[i]);
+	}
 
 	lf->fun = enchant_randomly_function;
 }
 
 // TODO: implement
-// void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const ItemType item, const int min_level, const int max_level, const int isTreasure)
+void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const ItemType item, const int min_level, const int max_level, const int isTreasure)
+{
+	// need 2*maxLevel vectors for enchantment instances
+	// and a single vector for the initial parameters
+	lf->params = (int**)malloc((2 * max_level + 1) * sizeof(int*));
+	
+	// basic data vector
+	lf->params[0] = (int*)malloc(3 * sizeof(int));
+	lf->params[0][0] = get_enchantability(item); // todo
+	lf->params[0][1] = min_level;
+	lf->params[0][2] = max_level;
+
+	int applicable[64];
+	int num_applicable = get_applicable_enchantments(item, version, applicable);
+	
+	// fill the enchantment instance vector array
+	for (int level = 0; level < max_level; level++)
+	{
+		// create a vector for the current level
+		int vector_size = get_enchant_level_vector(level, applicable, num_applicable, NULL);
+		int* vec = malloc(); // todo
+		get_enchant_level_vector(level, applicable, num_applicable, vec); // todo
+		lf->params[level+1] = vec;
+	}
+}

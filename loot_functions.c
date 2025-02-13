@@ -739,8 +739,8 @@ void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const
 	
 	init_function(lf);
 	lf->varparams_int_arr = (int**)malloc((2 * max_level + 1) * sizeof(int*));
-	lf->params = (void*)lf->varparams_int_arr;
 	lf->varparams_int_arr_size = 2 * max_level + 1;
+	lf->params = (void*)lf->varparams_int_arr;
 
 	// basic data vector
 	lf->varparams_int_arr[0] = (int*)malloc(3 * sizeof(int));

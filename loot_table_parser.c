@@ -457,6 +457,23 @@ static int init_loot_pool(const char* pool_data, const int pool_id, LootTableCon
 	return 0;
 }
 
+static void free_loot_function(LootFunction* lf)
+{
+	if (lf->varparams_int != NULL)
+		free(lf->varparams_int);
+
+	if (lf->varparams_int_arr != NULL)
+	{
+		for (int i = 0; i < lf->varparams_int_arr_size; i++)
+			free(lf->varparams_int_arr[i]);
+		free(lf->varparams_int_arr);
+		lf->varparams_int_arr_size = 0;
+	}
+
+	lf->params = NULL;
+	lf->fun = NULL;
+}
+
 // private
 static void free_loot_pool(LootPool* pool)
 {
@@ -470,10 +487,7 @@ static void free_loot_pool(LootPool* pool)
 	free(pool->entry_functions_count);
 
 	for (int i = 0; i < functionCount; i++)
-	{
-		if (pool->loot_functions[i].params != NULL)
-			free(pool->loot_functions[i].params);
-	}
+		free_loot_function(&(pool->loot_functions[i]));
 
 	free(pool->loot_functions);
 }

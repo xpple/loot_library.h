@@ -122,8 +122,8 @@ static void fill_incompatible_enchantments()
 	IS_INCOMPATIBLE_ENCHANT[DEPTH_STRIDER][FROST_WALKER] = 1;
 	IS_INCOMPATIBLE_ENCHANT[FROST_WALKER][DEPTH_STRIDER] = 1;
 
-	IS_INCOMPATIBLE_ENCHANT[MENDING][INFINITY_BOW] = 1;
-	IS_INCOMPATIBLE_ENCHANT[INFINITY_BOW][MENDING] = 1;
+	IS_INCOMPATIBLE_ENCHANT[MENDING][INFINITY_ENCHANTMENT] = 1;
+	IS_INCOMPATIBLE_ENCHANT[INFINITY_ENCHANTMENT][MENDING] = 1;
 
 	IS_INCOMPATIBLE_ENCHANT[RIPTIDE][CHANNELING] = 1;
 	IS_INCOMPATIBLE_ENCHANT[CHANNELING][RIPTIDE] = 1;
@@ -323,7 +323,7 @@ static int is_applicable(const Enchantment enchantment, const ItemType item)
 	case POWER:
 	case PUNCH:
 	case FLAME:
-	case INFINITY:
+	case INFINITY_ENCHANTMENT:
 		return item == BOW;
 
 	case MULTISHOT:
@@ -350,6 +350,18 @@ static int is_applicable(const Enchantment enchantment, const ItemType item)
 	return 0;
 }
 
+static int test_effective_level(const Enchantment enchantment, const int ench_level, const int eff_level)
+{
+	// TODO
+	return 0;
+}
+
+static int get_weight(const Enchantment enchantment)
+{
+	// TODO
+	return 1;
+}
+
 static int get_max_level(const Enchantment enchantment)
 {
 	static const int MAX_LEVEL[64] = {
@@ -374,7 +386,7 @@ static int get_applicable_enchantments(const ItemType item, const MCVersion vers
 		PROTECTION, FIRE_PROTECTION, FEATHER_FALLING, BLAST_PROTECTION, PROJECTILE_PROTECTION,
 		RESPIRATION, AQUA_AFFINITY, THORNS, DEPTH_STRIDER, FROST_WALKER, CURSE_OF_BINDING,
 		SHARPNESS, SMITE, BANE_OF_ARTHROPODS, KNOCKBACK, FIRE_ASPECT, LOOTING, SWEEPING_EDGE,
-		EFFICIENCY, SILK_TOUCH, UNBREAKING, FORTUNE, POWER, PUNCH, FLAME, INFINITY,
+		EFFICIENCY, SILK_TOUCH, UNBREAKING, FORTUNE, POWER, PUNCH, FLAME, INFINITY_ENCHANTMENT,
 		LUCK_OF_THE_SEA, LURE, LOYALTY, IMPALING, RIPTIDE, CHANNELING, MENDING, CURSE_OF_VANISHING,
 		NO_ENCHANTMENT // sentinel
 	};
@@ -382,7 +394,7 @@ static int get_applicable_enchantments(const ItemType item, const MCVersion vers
 		PROTECTION, FIRE_PROTECTION, FEATHER_FALLING, BLAST_PROTECTION, PROJECTILE_PROTECTION,
 		RESPIRATION, AQUA_AFFINITY, THORNS, DEPTH_STRIDER, FROST_WALKER, CURSE_OF_BINDING,
 		SHARPNESS, SMITE, BANE_OF_ARTHROPODS, KNOCKBACK, FIRE_ASPECT, LOOTING, SWEEPING_EDGE,
-		EFFICIENCY, SILK_TOUCH, UNBREAKING, FORTUNE, POWER, PUNCH, FLAME, INFINITY,
+		EFFICIENCY, SILK_TOUCH, UNBREAKING, FORTUNE, POWER, PUNCH, FLAME, INFINITY_ENCHANTMENT,
 		LUCK_OF_THE_SEA, LURE, LOYALTY, IMPALING, RIPTIDE, CHANNELING, 
 		MULTISHOT, QUICK_CHARGE, PIERCING, MENDING, CURSE_OF_VANISHING,
 		NO_ENCHANTMENT // sentinel
@@ -407,6 +419,41 @@ static int get_applicable_enchantments(const ItemType item, const MCVersion vers
 	}
 
 	return j; // return the number of applicable enchantments
+}
+
+static int get_enchant_level_vector(const int level, const int applicable[], const int num_applicable, int* vec)
+{
+	int vecSize = 0;
+	int totalWeight = 0;
+
+	for (int i = 0; i < num_applicable; i++)
+	{
+		const int enchantment = applicable[i];
+		const int max_level = get_max_level(enchantment);
+
+		for (int ench_level = max_level; ench_level >= 1; ench_level--)
+		{
+			if (test_effective_level(enchantment, ench_level, level) == 0)
+				continue;
+
+			if (vec != NULL)
+			{
+				vec[3 * vecSize + 2] = enchantment;
+				vec[3 * vecSize + 3] = ench_level;
+				vec[3 * vecSize + 4] = get_weight(enchantment);
+			}
+
+			vecSize++;
+			break;
+		}
+	}
+
+	if (vec == NULL)
+		return vecSize;
+
+	vec[0] = vecSize;
+	vec[1] = totalWeight;
+	return vecSize;
 }
 
 //  Enchantment function creators
@@ -438,25 +485,28 @@ void create_enchant_randomly(LootFunction* lf, const MCVersion version, const It
 	// copy applicable enchants, along with their max levels
 	for (int i = 0; i < enchantCount; i++)
 	{
-		lf->params[1 + 2*i] = applicable[i];
-		lf->params[1 + 2*i + 1] = get_max_level(applicable[i]);
+		lf->varparams_int[1 + 2*i] = applicable[i];
+		lf->varparams_int[1 + 2*i + 1] = get_max_level(applicable[i]);
 	}
 
 	lf->fun = enchant_randomly_function;
 }
 
-// TODO: implement
 void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const ItemType item, const int min_level, const int max_level, const int isTreasure)
 {
 	// need 2*maxLevel vectors for enchantment instances
 	// and a single vector for the initial parameters
-	lf->params = (int**)malloc((2 * max_level + 1) * sizeof(int*));
 	
+	init_function(lf);
+	lf->varparams_int_arr = (int**)malloc((2 * max_level + 1) * sizeof(int*));
+	lf->params = (void*)lf->varparams_int_arr;
+	lf->varparams_int_arr_size = 2 * max_level + 1;
+
 	// basic data vector
-	lf->params[0] = (int*)malloc(3 * sizeof(int));
-	lf->params[0][0] = get_enchantability(item); // todo
-	lf->params[0][1] = min_level;
-	lf->params[0][2] = max_level;
+	lf->varparams_int_arr[0] = (int*)malloc(3 * sizeof(int));
+	lf->varparams_int_arr[0][0] = get_enchantability(item); // todo
+	lf->varparams_int_arr[0][1] = min_level;
+	lf->varparams_int_arr[0][2] = max_level;
 
 	int applicable[64];
 	int num_applicable = get_applicable_enchantments(item, version, applicable);
@@ -466,8 +516,10 @@ void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const
 	{
 		// create a vector for the current level
 		int vector_size = get_enchant_level_vector(level, applicable, num_applicable, NULL);
-		int* vec = malloc(); // todo
+		int* vec = malloc((3 * vector_size + 2) * sizeof(int));
 		get_enchant_level_vector(level, applicable, num_applicable, vec); // todo
-		lf->params[level+1] = vec;
+		lf->varparams_int_arr[level+1] = vec;
 	}
+
+	lf->fun = enchant_with_levels_function;
 }

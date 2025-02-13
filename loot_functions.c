@@ -578,7 +578,7 @@ static int get_max_level(const Enchantment enchantment)
 		5, 2, 1, 1, // bows
 		3, 3, 4, // crossbows
 		5, 3, 3, 1, // trident
-		0, 0, 0, // mace
+		5, 4, 3, // mace
 		1, 3, 1, 1 // general
 	};
 

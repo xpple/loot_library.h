@@ -84,6 +84,7 @@ enum MCVersion {
 };
 
 enum ItemType {
+	// group types
 	HELMET,
 	CHESTPLATE,
 	LEGGINGS,

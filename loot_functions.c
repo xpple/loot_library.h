@@ -358,8 +358,45 @@ static int test_effective_level(const Enchantment enchantment, const int ench_le
 
 static int get_weight(const Enchantment enchantment)
 {
-	// TODO
-	return 1;
+	switch (enchantment)
+	{
+	case NO_ENCHANTMENT:
+		return 0;
+
+	// common, weight = 10
+	case PROTECTION:
+	case SHARPNESS:
+	case EFFICIENCY:
+	case POWER:
+	case PIERCING:
+		return 10;
+
+	// uncommon, weight = 5
+	case FIRE_PROTECTION:
+	case FEATHER_FALLING:
+	case PROJECTILE_PROTECTION:
+	case SMITE:
+	case BANE_OF_ARTHROPODS:
+	case KNOCKBACK:
+	case UNBREAKING:
+	case LOYALTY:
+	case QUICK_CHARGE:
+		return 5;
+
+	// very rare, weight = 1
+	case THORNS:
+	case CURSE_OF_BINDING:
+	case SOUL_SPEED:
+	case SILK_TOUCH:
+	case INFINITY_ENCHANTMENT:
+	case CHANNELING:
+	case CURSE_OF_VANISHING:
+		return 1;
+
+	// rare, weight = 2
+	default:
+		return 2;
+	}
 }
 
 static int get_max_level(const Enchantment enchantment)
@@ -378,6 +415,45 @@ static int get_max_level(const Enchantment enchantment)
 	};
 
 	return MAX_LEVEL[enchantment];
+}
+
+static int get_enchantability(const char* item_name)
+{
+	// I'm truly sorry.
+	if (strcmp(item_name, "leather_helmet") == 0) return 15;
+	if (strcmp(item_name, "leather_chestplate") == 0) return 15;
+	if (strcmp(item_name, "leather_leggings") == 0) return 15;
+	if (strcmp(item_name, "leather_boots") == 0) return 15;
+	if (strcmp(item_name, "iron_helmet") == 0) return 9;
+	if (strcmp(item_name, "iron_chestplate") == 0) return 9;
+	if (strcmp(item_name, "iron_leggings") == 0) return 9;
+	if (strcmp(item_name, "iron_boots") == 0) return 9;	
+	if (strcmp(item_name, "golden_helmet") == 0) return 25;
+	if (strcmp(item_name, "golden_chestplate") == 0) return 25;
+	if (strcmp(item_name, "golden_leggings") == 0) return 25;
+	if (strcmp(item_name, "golden_boots") == 0) return 25;
+	if (strcmp(item_name, "diamond_helmet") == 0) return 10;
+	if (strcmp(item_name, "diamond_chestplate") == 0) return 10;
+	if (strcmp(item_name, "diamond_leggings") == 0) return 10;
+	if (strcmp(item_name, "diamond_boots") == 0) return 10;
+	if (strcmp(item_name, "fishing_rod") == 0) return 1;
+	if (strcmp(item_name, "book") == 0) return 1;
+	if (strcmp(item_name, "iron_pickaxe") == 0) return 14;
+	if (strcmp(item_name, "iron_axe") == 0) return 14;
+	if (strcmp(item_name, "iron_hoe") == 0) return 14;
+	if (strcmp(item_name, "iron_shovel") == 0) return 14;
+	if (strcmp(item_name, "iron_sword") == 0) return 14;
+	if (strcmp(item_name, "golden_pickaxe") == 0) return 22;
+	if (strcmp(item_name, "golden_axe") == 0) return 22;
+	if (strcmp(item_name, "golden_hoe") == 0) return 22;
+	if (strcmp(item_name, "golden_shovel") == 0) return 22;
+	if (strcmp(item_name, "golden_sword") == 0) return 22;
+	if (strcmp(item_name, "diamond_pickaxe") == 0) return 10;
+	if (strcmp(item_name, "diamond_axe") == 0) return 10;
+	if (strcmp(item_name, "diamond_hoe") == 0) return 10;
+	if (strcmp(item_name, "diamond_shovel") == 0) return 10;
+	if (strcmp(item_name, "diamond_sword") == 0) return 10;
+	if (strcmp(item_name, "bow") == 0) return 1;
 }
 
 static int get_applicable_enchantments(const ItemType item, const MCVersion version, int enchantments[])
@@ -438,9 +514,11 @@ static int get_enchant_level_vector(const int level, const int applicable[], con
 
 			if (vec != NULL)
 			{
+				const int w = get_weight(enchantment);
 				vec[3 * vecSize + 2] = enchantment;
 				vec[3 * vecSize + 3] = ench_level;
-				vec[3 * vecSize + 4] = get_weight(enchantment);
+				vec[3 * vecSize + 4] = w;
+				totalWeight += w;
 			}
 
 			vecSize++;
@@ -492,7 +570,7 @@ void create_enchant_randomly(LootFunction* lf, const MCVersion version, const It
 	lf->fun = enchant_randomly_function;
 }
 
-void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const ItemType item, const int min_level, const int max_level, const int isTreasure)
+void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const char* item_name, const ItemType item_type, const int min_level, const int max_level, const int isTreasure)
 {
 	// need 2*maxLevel vectors for enchantment instances
 	// and a single vector for the initial parameters
@@ -504,12 +582,12 @@ void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const
 
 	// basic data vector
 	lf->varparams_int_arr[0] = (int*)malloc(3 * sizeof(int));
-	lf->varparams_int_arr[0][0] = get_enchantability(item); // todo
+	lf->varparams_int_arr[0][0] = get_enchantability(item_name); // todo
 	lf->varparams_int_arr[0][1] = min_level;
 	lf->varparams_int_arr[0][2] = max_level;
 
 	int applicable[64];
-	int num_applicable = get_applicable_enchantments(item, version, applicable);
+	int num_applicable = get_applicable_enchantments(item_type, version, applicable);
 	
 	// fill the enchantment instance vector array
 	for (int level = 0; level < max_level; level++)

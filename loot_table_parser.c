@@ -37,10 +37,8 @@
 
 static char* get_no_whitespace_string(const char* str)
 {
-	int len = strlen(str);
+	int len = (int)strlen(str);
 	char* no_whitespace = (char*)malloc(len + 1);
-	if (no_whitespace == NULL)
-		ERR("Could not allocate memory for no_whitespace string");
 
 	int j = 0;
 	for (int i = 0; i < len; i++)
@@ -71,7 +69,7 @@ static char* extract_unnamed_object(const char* jsonstr, int index) {
 
 	int list_depth = 0;
 	int obj_depth = 0;
-	int len = strlen(jsonstr);
+	int len = (int)strlen(jsonstr);
 	// DEBUG_MSG("extract_unnamed_object got string with len = %d\n", len);
 
 	int indexBegin = 0;
@@ -120,8 +118,7 @@ static char* extract_named_object(const char* jsonstr, const char* key) {
 	char* keyPos = strstr(jsonstr, key);
 	if (keyPos == NULL) return NULL;
 
-	keyPos += strlen(key);
-	keyPos += 2; // format is always "key":(value), need to skip quote & colon
+	keyPos += strlen(key); // quote & colon are inside the key
 
 	// extract the character that follows the key
 	char objStart = *keyPos;
@@ -167,7 +164,7 @@ static int count_unnamed(const char* jsonarr)
 {
 	int depth = 0;
 	int count = 0;
-	int len = strlen(jsonarr);
+	int len = (int)strlen(jsonarr);
 
 	for (int i = 0; i < len; i++) {
 		if (jsonarr[i] == '[' || jsonarr[i] == '{') depth++;
@@ -180,10 +177,10 @@ static int count_unnamed(const char* jsonarr)
 	return count;
 }
 
-static char* get_item_name(const char* value)
+static char* remove_minecraft_prefix(const char* value)
 {
 	// remove quotes and "minecraft:" prefix
-	char* name = substr(value, 1 + 10, strlen(value) - 2);
+	char* name = substr(value, 1 + 10, (int)strlen(value) - 2);
 	return name;
 }
 
@@ -198,18 +195,96 @@ static int extract_int(const char* jsonstr, const char* key, const int or_else)
 	return result;
 }
 
+static ItemType get_item_type(const char* item_name)
+{
+	if (strstr(item_name, "_pickaxe") != NULL) return PICKAXE;
+	if (strstr(item_name, "_axe") != NULL) return AXE;
+	if (strstr(item_name, "_shovel") != NULL) return SHOVEL;
+	if (strstr(item_name, "_hoe") != NULL) return HOE;
+	if (strstr(item_name, "_sword") != NULL) return SWORD;
+	if (strstr(item_name, "_helmet") != NULL) return HELMET;
+	if (strstr(item_name, "_chestplate") != NULL) return CHESTPLATE;
+	if (strstr(item_name, "_leggings") != NULL) return LEGGINGS;
+	if (strstr(item_name, "_boots") != NULL) return BOOTS;
+
+	if (strcmp(item_name, "fishing_rod") == 0) return FISHING_ROD;
+	if (strcmp(item_name, "crossbow") == 0) return CROSSBOW;
+	if (strcmp(item_name, "trident") == 0) return TRIDENT;
+	if (strcmp(item_name, "bow") == 0) return BOW;
+	if (strcmp(item_name, "book") == 0) return BOOK;
+	if (strcmp(item_name, "mace") == 0) return MACE;
+
+	return NO_ITEM;
+}
+
+static Enchantment get_enchantment_from_name(const char* ench)
+{
+	// I'm sorry.
+	if (strcmp(ench, "protection") == 0) return PROTECTION;
+	if (strcmp(ench, "fire_protection") == 0) return FIRE_PROTECTION;
+	if (strcmp(ench, "feather_falling") == 0) return FEATHER_FALLING;
+	if (strcmp(ench, "blast_protection") == 0) return BLAST_PROTECTION;
+	if (strcmp(ench, "projectile_protection") == 0) return PROJECTILE_PROTECTION;
+	if (strcmp(ench, "respiration") == 0) return RESPIRATION;
+	if (strcmp(ench, "aqua_affinity") == 0) return AQUA_AFFINITY;
+	if (strcmp(ench, "thorns") == 0) return THORNS;
+	if (strcmp(ench, "soul_speed") == 0) return SOUL_SPEED;
+	if (strcmp(ench, "depth_strider") == 0) return DEPTH_STRIDER;
+	if (strcmp(ench, "frost_walker") == 0) return FROST_WALKER;
+	if (strcmp(ench, "swift_sneak") == 0) return SWIFT_SNEAK;
+	
+	if (strcmp(ench, "sharpness") == 0) return SHARPNESS;
+	if (strcmp(ench, "smite") == 0) return SMITE;
+	if (strcmp(ench, "bane_of_arthropods") == 0) return BANE_OF_ARTHROPODS;
+	if (strcmp(ench, "knockback") == 0) return KNOCKBACK;
+	if (strcmp(ench, "fire_aspect") == 0) return FIRE_ASPECT;
+	if (strcmp(ench, "looting") == 0) return LOOTING;
+	if (strstr(ench, "sweeping") != NULL) return SWEEPING_EDGE;
+
+	if (strcmp(ench, "efficiency") == 0) return EFFICIENCY;
+	if (strcmp(ench, "silk_touch") == 0) return SILK_TOUCH;
+	if (strcmp(ench, "fortune") == 0) return FORTUNE;
+
+	if (strcmp(ench, "power") == 0) return POWER;
+	if (strcmp(ench, "flame") == 0) return FLAME;
+	if (strcmp(ench, "infinity") == 0) return INFINITY_ENCHANTMENT;
+	if (strcmp(ench, "punch") == 0) return PUNCH;
+
+	if (strcmp(ench, "multishot") == 0) return MULTISHOT;
+	if (strcmp(ench, "quick_charge") == 0) return QUICK_CHARGE;
+	if (strcmp(ench, "piercing") == 0) return PIERCING;
+
+	if (strcmp(ench, "impaling") == 0) return IMPALING;
+	if (strcmp(ench, "loyalty") == 0) return LOYALTY;
+	if (strcmp(ench, "riptide") == 0) return RIPTIDE;
+	if (strcmp(ench, "channeling") == 0) return CHANNELING;
+
+	if (strcmp(ench, "luck_of_the_sea") == 0) return LUCK_OF_THE_SEA;
+	if (strcmp(ench, "lure") == 0) return LURE;
+
+	if (strcmp(ench, "density") == 0) return DENSITY;
+	if (strcmp(ench, "breach") == 0) return BREACH;
+	if (strcmp(ench, "wind_burst") == 0) return WIND_BURST;
+
+	if (strcmp(ench, "mending") == 0) return MENDING;
+	if (strcmp(ench, "unbreaking") == 0) return UNBREAKING;
+	if (strstr(ench, "binding") != NULL) return CURSE_OF_BINDING;
+	if (strstr(ench, "vanishing") != NULL) return CURSE_OF_VANISHING;
+
+	return NO_ENCHANTMENT;
+}
 
 // ----------------------------------------------
 // loot function parsers
 
-static void parse_set_count(LootFunction* loot_function, const char* function_data)
+static int parse_set_count(LootFunction* loot_function, const char* function_data)
 {
-	char* count_field = extract_named_object(function_data, "count"); // 1
+	char* count_field = extract_named_object(function_data, "\"count\":"); // 1
 	if (count_field == NULL)
 		ERR("set_count function does not declare a count field");
 
-	int min_i = extract_int(count_field, "min", -1);
-	int max_i = extract_int(count_field, "max", -1);
+	int min_i = extract_int(count_field, "\"min\":", -1);
+	int max_i = extract_int(count_field, "\"max\":", -1);
 
 	if (min_i == -1 || max_i == -1) {
 		min_i = max_i = atoi(count_field);
@@ -218,14 +293,61 @@ static void parse_set_count(LootFunction* loot_function, const char* function_da
 	free(count_field); // 0
 
 	create_set_count(loot_function, min_i, max_i);
+	return 0;
 }
 
+static void parse_enchant_randomly(LootTableContext* ctx, LootFunction* loot_function, const char* function_data, const char* item_name)
+{
+	// if the "enchantments" field is present, we need to extract the enchantment name.
+	// otherwise, we can simply create the enchant randomly function
+
+	ItemType item_type = get_item_type(item_name);
+	char* defined_enchantment = extract_named_object(function_data, "\"enchantments\":"); // 1
+
+	if (defined_enchantment == NULL)
+	{
+		create_enchant_randomly(loot_function, ctx->version, item_type, 1); // FIXME isTreasure is temporarily just set to true
+		DEBUG_MSG("Parsed enchant randomly for %s\n", item_name);
+		return;
+	}
+
+	// extract enchantment index from enchantment name
+	char* enchantment_name = substr(defined_enchantment, 1, (int)strlen(defined_enchantment) - 2); // 2
+	free(defined_enchantment); // 1
+	char* short_name = remove_minecraft_prefix(enchantment_name); // 2
+	free(enchantment_name); // 1
+	const Enchantment ench = get_enchantment_from_name(short_name);
+	DEBUG_MSG("Parsed one-enchant (%d, %s) enchant randomly for %s\n", ench, short_name, item_name);
+	free(short_name); // 0
+
+	create_enchant_randomly_one_enchant(loot_function, ench);
+}
+
+static void parse_enchant_with_levels(LootTableContext* ctx, LootFunction* loot_function, const char* function_data, const char* item_name)
+{
+	ItemType item_type = get_item_type(item_name);
+
+	// need: min level, max level, isTreasure
+	char* levels_object = extract_named_object(function_data, "\"levels\":"); // 1
+	int min_level = extract_int(levels_object, "\"min\":", 0);
+	int max_level = extract_int(levels_object, "\"max\":", 0);
+	free(levels_object); // 0
+
+	char* is_treasure_field = extract_named_object(function_data, "\"treasure\":"); // 1
+	int is_treasure = (is_treasure_field == NULL || strcmp(is_treasure_field, "true") == 0) ? 1 : 0;
+	if (is_treasure_field != NULL) 
+		free(is_treasure_field); // 0
+
+	create_enchant_with_levels(loot_function, ctx->version, item_name, item_type, min_level, max_level, is_treasure);
+
+	DEBUG_MSG("Parsed enchant with levels for %s: %d - %d, treasure: %d\n", item_name, min_level, max_level, is_treasure);
+}
 
 // ----------------------------------------------
 
 
 // private
-static void init_loot_table_items(const char* loot_table_string, LootTableContext* ctx)
+static void init_loot_table_items(char* loot_table_string, LootTableContext* ctx)
 {
 	char* cursor = loot_table_string;
 
@@ -247,25 +369,25 @@ static void init_loot_table_items(const char* loot_table_string, LootTableContex
 	cursor = loot_table_string;
 
 	for (int i = 0; i < ctx->item_count; i++) {
-		char* val = extract_named_object(cursor, "name");
-		char* name = get_item_name(val);
+		char* val = extract_named_object(cursor, "\"name\":");
+		char* name = remove_minecraft_prefix(val);
 		free(val);
 		ctx->item_names[i] = name;
 		DEBUG_MSG("Item %d: %s\n", i, name);
 
-		cursor = strstr(cursor, "\"name\":") + 2;
+		cursor = strstr(cursor, "\"name\":") + 8;
 	}
 }
 
 // private
 static int init_rolls(const char* pool_data, LootPool* pool)
 {
-	char* rolls_field = extract_named_object(pool_data, "rolls"); // 1
+	char* rolls_field = extract_named_object(pool_data, "\"rolls\":"); // 1
 	if (rolls_field == NULL)
 		return -1;
 
-	int minrolls = extract_int(rolls_field, "min", -1);
-	int maxrolls = extract_int(rolls_field, "max", -1);
+	int minrolls = extract_int(rolls_field, "\"min\":", -1);
+	int maxrolls = extract_int(rolls_field, "\"max\":", -1);
 	pool->min_rolls = minrolls;
 	pool->max_rolls = maxrolls;
 	pool->roll_count_function = roll_count_uniform;
@@ -285,13 +407,13 @@ static int init_rolls(const char* pool_data, LootPool* pool)
 // private
 static void map_entry_to_item(const char* entry_data, LootTableContext* ctx, int* item_id)
 {
-	char* name_field = extract_named_object(entry_data, "name"); // 1
+	char* name_field = extract_named_object(entry_data, "\"name\":"); // 1
 	if (name_field == NULL) {
 		*item_id = -1; // empty entry
 		return; 
 	}
 
-	char* iname = get_item_name(name_field); // 2
+	char* iname = remove_minecraft_prefix(name_field); // 2
 	for (int i = 0; i < ctx->item_count; i++) {
 		if (strcmp(ctx->item_names[i], iname) == 0) {
 			*item_id = i;
@@ -307,13 +429,13 @@ static void init_entry(const char* entry_data, LootPool* pool, const int entry_i
 {
 	int functions = 0;
 
-	char* functions_field = extract_named_object(entry_data, "functions"); // 1
+	char* functions_field = extract_named_object(entry_data, "\"functions\":"); // 1
 	if (functions_field != NULL) {
 		functions = count_unnamed(functions_field);
 		free(functions_field); // 0
 	}
 
-	int w = extract_int(entry_data, "weight", 1);
+	int w = extract_int(entry_data, "\"weight\":", 1);
 	pool->total_weight += w;
 
 	// initialize loot function fields
@@ -336,10 +458,12 @@ static void init_entry(const char* entry_data, LootPool* pool, const int entry_i
 // private
 static void init_entry_functions(const char* entry_data, LootPool* pool, const int entry_id, LootTableContext* ctx)
 {
-	char* functions_field = extract_named_object(entry_data, "functions"); // 1
+	char* functions_field = extract_named_object(entry_data, "\"functions\":"); // 1
 	if (functions_field == NULL)
-		return 0;
+		return;
 	
+	const int entry_item = pool->entry_to_item[entry_id];
+	const char* entry_item_name = entry_item == -1 ? NULL : ctx->item_names[entry_item];
 	int findex = pool->entry_functions_index[entry_id];
 	int fcount = pool->entry_functions_count[entry_id];
 
@@ -348,24 +472,25 @@ static void init_entry_functions(const char* entry_data, LootPool* pool, const i
 		LootFunction* loot_function = &(pool->loot_functions[index_in_array]);
 
 		char* function_data = extract_unnamed_object(functions_field, i); // 2
-		char* function_name = extract_named_object(function_data, "function"); // 3
+		char* function_name = extract_named_object(function_data, "\"function\":"); // 3
 
 		if (strcmp(function_name, "\"minecraft:set_count\"") == 0) {
 			parse_set_count(loot_function, function_data);
 		}
 		else if (strcmp(function_name, "\"minecraft:enchant_with_levels\"") == 0) {
-			// TODO
-			// parse_enchant_with_levels(loot_function, function_data);
+			parse_enchant_with_levels(ctx, loot_function, function_data, entry_item_name);
 			create_no_op(loot_function);
 		}
 		else if (strcmp(function_name, "\"minecraft:enchant_randomly\"") == 0) {
-			// TODO
-			// parse_enchant_randomly(loot_function, function_data);
+			parse_enchant_randomly(ctx, loot_function, function_data, entry_item_name);
 			create_no_op(loot_function);
 		}
 		else if (strcmp(function_name, "\"minecraft:set_damage\"") == 0) {
 			// inline parsing here, it's a very simple function
 			create_set_damage(loot_function);
+		}
+		else {
+			create_no_op(loot_function);
 		}
 
 		free(function_data); // 2
@@ -373,7 +498,7 @@ static void init_entry_functions(const char* entry_data, LootPool* pool, const i
 	}
 
 	free(functions_field); // 0
-	return 0;
+	return;
 }
 
 // private
@@ -383,7 +508,7 @@ static void precompute_loot_pool(LootPool* pool, const char* entries_field)
 
 	for (int i = 0; i < pool->entry_count; i++) {
 		char* entry_data = extract_unnamed_object(entries_field, i); // 1
-		int entry_weight = extract_int(entry_data, "weight", 1);
+		int entry_weight = extract_int(entry_data, "\"weight\":", 1);
 
 		for (int j = 0; j < entry_weight; j++) {
 			pool->precomputed_loot[index] = i;
@@ -404,13 +529,13 @@ static int init_loot_pool(const char* pool_data, const int pool_id, LootTableCon
 
 	int ret = init_rolls(pool_data, pool);
 	if (ret != 0)
-		ERR("Loot pool %d does not declare a roll choice function", pool_id);
+		ERR("Loot pool does not declare a roll choice function");
 
 	// count entries inside loot table
 
-	char* entries_field = extract_named_object(pool_data, "entries"); // 1
+	char* entries_field = extract_named_object(pool_data, "\"entries\":"); // 1
 	if (entries_field == NULL)
-		ERR("Loot pool %d does not declare any entries", pool_id);
+		ERR("Loot pool does not declare any entries");
 	pool->entry_count = count_unnamed(entries_field);
 
 	// create the entries
@@ -500,8 +625,6 @@ int init_loot_table(const char* filename, LootTableContext* context, const MCVer
 	DEBUG_MSG("Parsing loot table %s\n", filename);
 
 	context->version = version;
-	if (version == undefined)
-		ERR("Can't parse loot table for undefined version");
 
 	// open the file, read the content, close the file.
 
@@ -520,7 +643,7 @@ int init_loot_table(const char* filename, LootTableContext* context, const MCVer
 	}
 
 	// read the file content
-	int read = fread(file_content, 1, file_size, fptr);
+	int read = (int)fread(file_content, 1, file_size, fptr);
 	if (read != file_size) {
 		fclose(fptr);
 		free(file_content);
@@ -545,7 +668,7 @@ int init_loot_table(const char* filename, LootTableContext* context, const MCVer
 
 	DEBUG_MSG("Initializing loot pools...\n");
 
-	char* pools_field = extract_named_object(loot_table_string, "pools"); // 2
+	char* pools_field = extract_named_object(loot_table_string, "\"pools\":"); // 2
 	if (pools_field == NULL)
 		ERR("Loot table does not declare any pools");
 
@@ -561,7 +684,7 @@ int init_loot_table(const char* filename, LootTableContext* context, const MCVer
 
 		int ret = init_loot_pool(pool_data, pool_id, context);
 		if (ret != 0)
-			ERR("Error while initializing loot pool #%d", pool_id);
+			ERR("Error while initializing loot pool");
 
 		free(pool_data); // 2
 	}

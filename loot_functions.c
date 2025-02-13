@@ -698,7 +698,7 @@ static int get_enchant_level_vector(const int level, const int applicable[], con
 
 //  Enchantment function creators
 
-void create_enchant_randomly_one_echant(LootFunction* lf, const Enchantment enchantment)
+void create_enchant_randomly_one_enchant(LootFunction* lf, const Enchantment enchantment)
 {
 	init_function(lf);
 	lf->params = lf->params_int;

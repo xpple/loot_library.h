@@ -217,7 +217,7 @@ static void enchant_with_levels_function(uint64_t* rand, ItemStack* is, const vo
 // ----------------------------------------------------------------------------------------
 // function creators
 
-void init_function(LootFunction* lf)
+static void init_function(LootFunction* lf)
 {
 	lf->params = NULL;
 	lf->varparams_int = NULL;
@@ -752,7 +752,7 @@ void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const
 	int num_applicable = get_applicable_enchantments(item_type, version, applicable);
 	
 	// fill the enchantment instance vector array
-	for (int level = 0; level < max_level; level++)
+	for (int level = 0; level < 2 * max_level; level++)
 	{
 		// create a vector for the current level
 		int vector_size = get_enchant_level_vector(level, applicable, num_applicable, NULL);

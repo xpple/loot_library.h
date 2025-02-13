@@ -479,11 +479,9 @@ static void init_entry_functions(const char* entry_data, LootPool* pool, const i
 		}
 		else if (strcmp(function_name, "\"minecraft:enchant_with_levels\"") == 0) {
 			parse_enchant_with_levels(ctx, loot_function, function_data, entry_item_name);
-			create_no_op(loot_function);
 		}
 		else if (strcmp(function_name, "\"minecraft:enchant_randomly\"") == 0) {
 			parse_enchant_randomly(ctx, loot_function, function_data, entry_item_name);
-			create_no_op(loot_function);
 		}
 		else if (strcmp(function_name, "\"minecraft:set_damage\"") == 0) {
 			// inline parsing here, it's a very simple function

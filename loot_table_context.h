@@ -1,10 +1,10 @@
-#pragma once
+#ifndef _LOOT_TABLE_CONTEXT_H
+#define _LOOT_TABLE_CONTEXT_H
+
 #include <stdint.h>
 
 #include "rng.h"
 #include "loot_functions.h"
-
-
 
 
 // ---------------------------------------------------------
@@ -48,3 +48,15 @@ struct LootTableContext {
 };
 
 
+// ---------------------------------------------------------
+// loot generation functions
+
+void set_loot_seed(LootTableContext* context, uint64_t seed);
+void set_internal_loot_seed(LootTableContext* context, uint64_t internal_seed);
+
+int get_item_id(LootTableContext* context, const char* item_name);
+const char* get_item_name(LootTableContext* context, int item_id);
+
+void generate_loot(LootTableContext* context);
+
+#endif // _LOOT_TABLE_CONTEXT_H

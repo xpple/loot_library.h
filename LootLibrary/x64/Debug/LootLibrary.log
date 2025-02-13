@@ -1,3 +1,1 @@
-﻿  loot_functions.c
-C:\Users\kludw\source\repos\loot_library.h\loot_functions.c(619,1): warning C4715: "get_enchantability”: niewszystkie ścieżki kodu zwracają wartość
-  LootLibrary.vcxproj -> C:\Users\kludw\source\repos\loot_library.h\x64\Debug\LootLibrary.exe
+﻿  LootLibrary.vcxproj -> C:\Users\kludw\source\repos\loot_library.h\x64\Debug\LootLibrary.exe

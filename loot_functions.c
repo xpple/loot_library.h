@@ -92,8 +92,12 @@ static inline int choose_enchantment(uint64_t* rand, int enchantmentVec[], const
 }
 
 static int IS_INCOMPATIBLE_ENCHANT[64][64];
+static int INCOMPATIBLE_INITIALIZED = 0;
 static void fill_incompatible_enchantments()
 {
+	if (INCOMPATIBLE_INITIALIZED) return;
+	INCOMPATIBLE_INITIALIZED = 1;
+
 	for (int i = 0; i < 64; i++)
 	{
 		for (int j = 0; j < 64; j++)
@@ -147,10 +151,12 @@ static inline void remove_incompatible_enchantments(int enchantmentIndex, int en
 	while (i < *vecSize)
 	{
 		const int ix = 3 * i;
-		if (moveBack > 0)
+		const int incompatible = IS_INCOMPATIBLE_ENCHANT[enchantmentID][enchantVec[ix]];
+
+		if (moveBack > 0 && !incompatible)
 			memcpy(enchantVec + ix - moveBack, enchantVec + ix, sizeof(int) * 3);
 
-		if (IS_INCOMPATIBLE_ENCHANT[enchantmentID][enchantVec[i]])
+		if (incompatible)
 		{
 			*totalWeight -= enchantVec[ix + 2]; // subtract the weight of removed enchantment
 			moveBack += 3; // make it so that all the following elements are moved back
@@ -202,12 +208,12 @@ static void enchant_with_levels_function(uint64_t* rand, ItemStack* is, const vo
 
 	while (nextInt(rand, 50) <= level)
 	{
-		remove_incompatible_enchantments(index, enchantmentVec, &vecSize, &totalWeight); // TODO implement
+		remove_incompatible_enchantments(index, enchantmentVec, &vecSize, &totalWeight);
 		if (vecSize == 0) break;
 
 		index = choose_enchantment(rand, enchantmentVec, vecSize, totalWeight);
-		is->enchantments[is->enchantment_count].enchantment = enchantmentVec[index];
-		is->enchantments[is->enchantment_count].level = enchantmentVec[index + 1];
+		is->enchantments[is->enchantment_count].enchantment = enchantmentVec[index * 3];
+		is->enchantments[is->enchantment_count].level = enchantmentVec[index * 3 + 1];
 		is->enchantment_count++;
 
 		level /= 2;
@@ -734,6 +740,8 @@ void create_enchant_randomly(LootFunction* lf, const MCVersion version, const It
 
 void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const char* item_name, const ItemType item_type, const int min_level, const int max_level, const int isTreasure)
 {
+	fill_incompatible_enchantments(); // only need this if we're using the enchant_with_levels function
+
 	// need 2*maxLevel vectors for enchantment instances
 	// and a single vector for the initial parameters
 	

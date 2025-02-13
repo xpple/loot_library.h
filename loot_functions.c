@@ -217,13 +217,20 @@ static void enchant_with_levels_function(uint64_t* rand, ItemStack* is, const vo
 // ----------------------------------------------------------------------------------------
 // function creators
 
+void init_function(LootFunction* lf)
+{
+	lf->params = NULL;
+	lf->varparams_int = NULL;
+	lf->varparams_int_arr = NULL;
+	lf->varparams_int_arr_size = 0;
+}
 
 void create_set_count(LootFunction* lf, const int min, const int max)
 {
-	lf->params = (int*)malloc(2 * sizeof(int));
-
-	lf->params[0] = min;
-	lf->params[1] = max;
+	init_function(lf);
+	lf->params = lf->params_int;
+	lf->params_int[0] = min;
+	lf->params_int[1] = max;
 
 	if (min == max)
 	{
@@ -243,9 +250,9 @@ void create_set_damage(LootFunction* lf)
 
 void create_skip_calls(LootFunction* lf, const int skip_count)
 {
-	lf->params = (int*)malloc(sizeof(int));
-
-	lf->params[0] = skip_count;
+	init_function(lf);
+	lf->params = lf->params_int;
+	lf->params_int[0] = skip_count;
 
 	if (skip_count == 1)
 	{
@@ -259,7 +266,7 @@ void create_skip_calls(LootFunction* lf, const int skip_count)
 
 void create_no_op(LootFunction* lf)
 {
-	lf->params = NULL;
+	init_function(lf);
 	lf->fun = no_op_function;
 }
 
@@ -406,10 +413,10 @@ static int get_applicable_enchantments(const ItemType item, const MCVersion vers
 
 void create_enchant_randomly_one_echant(LootFunction* lf, const Enchantment enchantment)
 {
-	lf->params = (int*)malloc(2 * sizeof(int));
-
-	lf->params[0] = enchantment;
-	lf->params[1] = get_max_level(enchantment);
+	init_function(lf);
+	lf->params = lf->params_int;
+	lf->params_int[0] = enchantment;
+	lf->params_int[1] = get_max_level(enchantment);
 
 	lf->fun = set_enchantment_random_level_function;
 }
@@ -418,10 +425,12 @@ void create_enchant_randomly(LootFunction* lf, const MCVersion version, const It
 {
 	int enchantCount = get_applicable_enchantments(item, version, NULL);
 
-	lf->params = (int*)malloc((2 * enchantCount + 1) * sizeof(int));
+	init_function(lf);
+	lf->varparams_int = (int*)malloc((2 * enchantCount + 1) * sizeof(int));
+	lf->params = lf->varparams_int;
 
-	lf->params[0] = enchantCount;
-	get_applicable_enchantments(item, version, lf->params + 1);
+	lf->varparams_int[0] = enchantCount;
+	get_applicable_enchantments(item, version, lf->varparams_int + 1);
 
 	lf->fun = enchant_randomly_function;
 }

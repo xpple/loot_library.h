@@ -350,10 +350,171 @@ static int is_applicable(const Enchantment enchantment, const ItemType item)
 	return 0;
 }
 
-static int test_effective_level(const Enchantment enchantment, const int ench_level, const int eff_level)
+static int test_effective_level(const Enchantment enchantment, const int i, const int n)
 {
-	// TODO
-	return 0;
+	switch (enchantment)
+	{
+	case PROTECTION:
+		if ((n < 1 + (i - 1) * 11) || (n > 1 + (i - 1) * 11 + 11))
+			return 0;
+		break;
+	case FIRE_PROTECTION:
+		if ((n < 10 + (i - 1) * 8) || (n > 10 + (i - 1) * 8 + 8))
+			return 0;
+		break;
+	case FEATHER_FALLING:
+		if ((n < 5 + (i - 1) * 6) || (n > 5 + (i - 1) * 6 + 6))
+			return 0;
+		break;
+	case BLAST_PROTECTION:
+		if ((n < 5 + (i - 1) * 8) || (n > 5 + (i - 1) * 8 + 8))
+			return 0;
+		break;
+	case PROJECTILE_PROTECTION:
+		if ((n < 3 + (i - 1) * 6) || (n > 3 + (i - 1) * 6 + 6))
+			return 0;
+		break;
+	case RESPIRATION:
+		if ((n < 10 * i) || (n > 10 * i + 30))
+			return 0;
+		break;
+	case AQUA_AFFINITY:
+		if ((n < 1) || (n > 41))
+			return 0;
+		break;
+	case THORNS:
+		if ((n < 10 + (20 * (i - 1))) || (n > 10 + (20 * (i - 1)) + 50))
+			return 0;
+		break;
+	case DEPTH_STRIDER:
+		if ((n < i * 10) || (n > i * 10 + 15))
+			return 0;
+		break;
+	case FROST_WALKER:
+		if ((n < i * 10) || (n > i * 10 + 15))
+			return 0;
+		break;
+	case CURSE_OF_BINDING:
+		if ((n < 25) || (n > 50))
+			return 0;
+		break;
+	case SOUL_SPEED:
+		if ((n < i * 10) || (n > i * 10 + 15))
+			return 0;
+		break;
+	case SHARPNESS:
+		if ((n < 1 + (i - 1) * 11) || (n > 1 + (i - 1) * 11 + 20))
+			return 0;
+		break;
+	case SMITE:
+		if ((n < 5 + (i - 1) * 8) || (n > 5 + (i - 1) * 8 + 20))
+			return 0;
+		break;
+	case BANE_OF_ARTHROPODS:
+		if ((n < 5 + (i - 1) * 8) || (n > 5 + (i - 1) * 8 + 20))
+			return 0;
+		break;
+	case KNOCKBACK:
+		if ((n < 5 + 20 * (i - 1)) || (n > 1 + (i * 10) + 50))
+			return 0;
+		break;
+	case FIRE_ASPECT:
+		if ((n < 10 + 20 * (i - 1)) || (n > 1 + (i * 10) + 50))
+			return 0;
+		break;
+	case LOOTING:
+		if ((n < 15 + (i - 1) * 9) || (n > 1 + (i * 10) + 50))
+			return 0;
+		break;
+	case SWEEPING_EDGE:
+		if ((n < 5 + (i - 1) * 9) || (n > 5 + (i - 1) * 9 + 15))
+			return 0;
+		break;
+	case EFFICIENCY:
+		if ((n < (1 + 10 * (i - 1))) || (n > 1 + (i * 10) + 50))
+			return 0;
+		break;
+	case SILK_TOUCH:
+		if ((n < 15) || (n > 1 + (i * 10) + 50))
+			return 0;
+		break;
+	case UNBREAKING:
+		if ((n < 5 + (i - 1) * 8) || (n > 1 + (i * 10) + 50))
+			return 0;
+		break;
+	case FORTUNE:
+		if ((n < 15 + (i - 1) * 9) || (n > 1 + (i * 10) + 50))
+			return 0;
+		break;
+	case POWER:
+		if ((n < 1 + (i - 1) * 10) || (n > 1 + (i - 1) * 10 + 15))
+			return 0;
+		break;
+	case PUNCH:
+		if ((n < 12 + (i - 1) * 20) || (n > 12 + (i - 1) * 20 + 25))
+			return 0;
+		break;
+	case FLAME:
+		if ((n < 20) || (n > 50))
+			return 0;
+		break;
+	case INFINITY_ENCHANTMENT:
+		if ((n < 20) || (n > 50))
+			return 0;
+		break;
+	case LUCK_OF_THE_SEA:
+	case LURE:
+		if ((n < 15 + (i - 1) * 9) || (n > 1 + (i * 10) + 50))
+			return 0;
+		break;
+	case LOYALTY:
+		if ((n < 5 + (i * 7)) || (n > 50))
+			return 0;
+		break;
+	case IMPALING:
+		if ((n < 1 + (i - 1) * 8) || (n > 1 + (i - 1) * 8 + 20))
+			return 0;
+		break;
+	case RIPTIDE:
+		if ((n < 10 + (i * 7)) || (n > 50))
+			return 0;
+		break;
+	case CHANNELING:
+		if ((n < 25) || (n > 50))
+			return 0;
+		break;
+	case MULTISHOT:
+		if ((n < 20) || (n > 50))
+			return 0;
+		break;
+	case QUICK_CHARGE:
+		if ((n < 12 + (i - 1) * 20) || (n > 50))
+			return 0;
+		break;
+	case PIERCING:
+		if ((n < 1 + (i - 1) * 10) || (n > 50))
+			return 0;
+		break;
+	case MENDING:
+		if ((n < i * 25) || (n > i * 25 + 50))
+			return 0;
+		break;
+	case CURSE_OF_VANISHING:
+		if ((n < 25) || (n > 50))
+			return 0;
+		break;
+	case DENSITY:
+		if ((n < 5 + (i - 1) * 8) || (n > 25 + (i - 1) * 8))
+			return 0;
+		break;
+	case BREACH:
+	case WIND_BURST:
+		if ((n < 15 + (i - 1) * 9) || (n > 65 + (i - 1) * 9))
+			return 0;
+		break;
+	}
+
+	return 1;
 }
 
 static int get_weight(const Enchantment enchantment)
@@ -381,6 +542,7 @@ static int get_weight(const Enchantment enchantment)
 	case UNBREAKING:
 	case LOYALTY:
 	case QUICK_CHARGE:
+	case DENSITY:
 		return 5;
 
 	// very rare, weight = 1

@@ -1,6 +1,3 @@
 ﻿  loot_functions.c
-C:\Users\kludw\source\repos\loot_library.h\loot_functions.c(854,3): warning C4013: niezdefiniowany "printf"; przy założeniu, że extern zwraca int
-  main.c
-C:\Users\kludw\source\repos\loot_library.h\main.c(7,2): warning C4013: niezdefiniowany "test_enchant_vec"; przy założeniu, że extern zwraca int
-  Generowanie kodu...
+C:\Users\kludw\source\repos\loot_library.h\loot_functions.c(856,3): warning C4013: niezdefiniowany "printf"; przy założeniu, że extern zwraca int
   LootLibrary.vcxproj -> C:\Users\kludw\source\repos\loot_library.h\x64\Debug\LootLibrary.exe

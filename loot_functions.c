@@ -190,6 +190,7 @@ static void enchant_with_levels_function(uint64_t* rand, ItemStack* is, const vo
 	int level = minLevel;
 	if (minLevel != maxLevel)
 		level += nextInt(rand, maxLevel - minLevel + 1);
+
 	const int delta = enchantability / 4 + 1;
 	level += 1 + nextInt(rand, delta) + nextInt(rand, delta);
 	const float amplifier = (nextFloat(rand) + nextFloat(rand) - 1.0F) * 0.15F;
@@ -197,12 +198,13 @@ static void enchant_with_levels_function(uint64_t* rand, ItemStack* is, const vo
 
 	// copy the available enchantment results to a local array
 	is->enchantment_count = 0;
-	int vecSize = varparams_int_arr[level][0];
-	int totalWeight = varparams_int_arr[level][1];
+	const int enchant_vec_index = level + 1;
+	int vecSize = varparams_int_arr[enchant_vec_index][0];     // there was a nasty bug here: 
+	int totalWeight = varparams_int_arr[enchant_vec_index][1]; // don't forget about the first vector!!!
 	if (vecSize == 0) return; // no enchantments available
 	
 	int enchantmentVec[128]; // holds triples (id, level, weight), max 42 * 3 = 126 elements
-	memcpy(enchantmentVec, varparams_int_arr[level] + 2, sizeof(int) * vecSize * 3);
+	memcpy(enchantmentVec, varparams_int_arr[enchant_vec_index] + 2, sizeof(int) * vecSize * 3);
 
 	int index = choose_enchantment(rand, enchantmentVec, vecSize, totalWeight);
 	is->enchantments[0].enchantment = enchantmentVec[index];
@@ -847,7 +849,7 @@ void test_enchant_vec()
 	int num_applicable = get_applicable_enchantments(SWORD, v1_16, applicable, 0);
 
 	int vec[128];
-	int size = get_enchant_level_vector(30, applicable, num_applicable, vec);
+	int size = get_enchant_level_vector(39, applicable, num_applicable, vec);
 
 	for (int i = 0; i < size; i++)
 	{

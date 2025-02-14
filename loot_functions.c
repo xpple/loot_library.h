@@ -282,7 +282,7 @@ void create_no_op(LootFunction* lf)
 // ----------------------------------------------------------------------------------------
 //  Enchantment functions
 
-static int is_applicable(const Enchantment enchantment, const ItemType item)
+static int is_applicable(const Enchantment enchantment, const ItemType item, const int use_overrides)
 {
 	if (enchantment == NO_ENCHANTMENT) return 0;
 	if (item == BOOK) return 1; // the wildcard
@@ -294,13 +294,14 @@ static int is_applicable(const Enchantment enchantment, const ItemType item)
 	case MENDING:
 		return 1;
 
-	case THORNS: // technically this isn't true for enchanting table, but no real point in supporting that
+	case THORNS:
+		return item == CHESTPLATE || (use_overrides == 1 && (item == LEGGINGS || item == BOOTS || item == HELMET));
 	case CURSE_OF_BINDING:
 	case PROTECTION:
 	case FIRE_PROTECTION:
 	case BLAST_PROTECTION:
 	case PROJECTILE_PROTECTION:
-		return item == HELMET || item == CHESTPLATE || item == LEGGINGS || item == BOOTS;
+		return item == CHESTPLATE || item == LEGGINGS || item == BOOTS || item == HELMET;
 
 	case RESPIRATION:
 	case AQUA_AFFINITY:
@@ -318,11 +319,12 @@ static int is_applicable(const Enchantment enchantment, const ItemType item)
 	case SHARPNESS:
 	case SMITE:
 	case BANE_OF_ARTHROPODS:
+		return item == SWORD || (use_overrides == 1 && item == AXE);
 	case KNOCKBACK:
 	case FIRE_ASPECT:
 	case LOOTING:
 	case SWEEPING_EDGE:
-		return item == SWORD; // TODO add mace
+		return item == SWORD;
 
 	case EFFICIENCY:
 	case SILK_TOUCH:
@@ -625,9 +627,10 @@ static int get_enchantability(const char* item_name)
 	if (strcmp(item_name, "diamond_shovel") == 0) return 10;
 	if (strcmp(item_name, "diamond_sword") == 0) return 10;
 	if (strcmp(item_name, "bow") == 0) return 1;
+	return 1;
 }
 
-static int get_applicable_enchantments(const ItemType item, const MCVersion version, int enchantments[])
+static int get_applicable_enchantments(const ItemType item, const MCVersion version, int enchantments[], int use_overrides)
 {
 	static const int ORDER_V1_13[64] = { 
 		PROTECTION, FIRE_PROTECTION, FEATHER_FALLING, BLAST_PROTECTION, PROJECTILE_PROTECTION,
@@ -656,7 +659,7 @@ static int get_applicable_enchantments(const ItemType item, const MCVersion vers
 	int i = 0, j = 0;
 	while (order[i] != NO_ENCHANTMENT)
 	{
-		if (is_applicable(order[i], item))
+		if (is_applicable(order[i], item, use_overrides))
 		{
 			if (enchantments != NULL)
 				enchantments[j] = order[i];
@@ -719,17 +722,15 @@ void create_enchant_randomly_one_enchant(LootFunction* lf, const Enchantment enc
 
 void create_enchant_randomly(LootFunction* lf, const MCVersion version, const ItemType item, const int isTreasure)
 {
-	int enchantCount = get_applicable_enchantments(item, version, NULL);
+	int enchantCount = get_applicable_enchantments(item, version, NULL, 1);
 
 	init_function(lf);
 	lf->varparams_int = (int*)malloc((2 * enchantCount + 1) * sizeof(int));
 	lf->params = lf->varparams_int;
-
 	lf->varparams_int[0] = enchantCount;
-	get_applicable_enchantments(item, version, lf->varparams_int + 1);
 
 	int applicable[64];
-	get_applicable_enchantments(item, version, applicable);
+	get_applicable_enchantments(item, version, applicable, 1);
 
 	// copy applicable enchants, along with their max levels
 	for (int i = 0; i < enchantCount; i++)
@@ -760,7 +761,7 @@ void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const
 	lf->varparams_int_arr[0][2] = max_level;
 
 	int applicable[64];
-	int num_applicable = get_applicable_enchantments(item_type, version, applicable);
+	int num_applicable = get_applicable_enchantments(item_type, version, applicable, 0);
 	
 	// fill the enchantment instance vector array
 	for (int level = 0; level < 2 * max_level; level++)
@@ -836,4 +837,20 @@ static const char* ENCHANT_NAMES[64] = {
 const char* get_enchantment_name(const Enchantment enchantment)
 {
 	return ENCHANT_NAMES[enchantment];
+}
+
+// function testing
+
+void test_enchant_vec()
+{
+	int applicable[64];
+	int num_applicable = get_applicable_enchantments(SWORD, v1_16, applicable, 0);
+
+	int vec[128];
+	int size = get_enchant_level_vector(30, applicable, num_applicable, vec);
+
+	for (int i = 0; i < size; i++)
+	{
+		printf("%s %d %d\n", get_enchantment_name((Enchantment)vec[3 * i + 2]), vec[3 * i + 3], vec[3 * i + 4]);
+	}
 }

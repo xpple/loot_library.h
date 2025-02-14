@@ -331,6 +331,8 @@ static void parse_enchant_with_levels(LootTableContext* ctx, LootFunction* loot_
 	char* levels_object = extract_named_object(function_data, "\"levels\":"); // 1
 	int min_level = extract_int(levels_object, "\"min\":", 0);
 	int max_level = extract_int(levels_object, "\"max\":", 0);
+	if (min_level == 0 && max_level == 0)
+		min_level = max_level = atoi(levels_object); // levels = some constant
 	free(levels_object); // 0
 
 	char* is_treasure_field = extract_named_object(function_data, "\"treasure\":"); // 1

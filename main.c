@@ -5,9 +5,9 @@
 
 int main() {
 	LootTableContext ctx;
-	init_loot_table("end_city.json", &ctx, (MCVersion)v1_16);
+	init_loot_table("stronghold_library_1_20_5.json", &ctx, (MCVersion)v1_16);
 
-	set_loot_seed(&ctx, 123456ULL);
+	set_loot_seed(&ctx, 12345ULL);
 	generate_loot(&ctx);
 
 	for (int i = 0; i < ctx.generated_item_count; i++)

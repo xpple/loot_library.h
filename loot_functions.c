@@ -81,14 +81,15 @@ static inline int java_round_positive(float f)
 
 static inline int choose_enchantment(uint64_t* rand, int enchantmentVec[], const int vecSize, const int totalWeight)
 {
+	const int vecCapacity = vecSize * 3;
 	int w = nextInt(rand, totalWeight);
-	for (int i = 2; i < vecSize; i += 3)
+	for (int i = 2; i < vecCapacity; i += 3)
 	{
 		w -= enchantmentVec[i];
 		if (w < 0) 
 			return i - 2;
 	}
-	return vecSize - 3;
+	return vecCapacity - 3;
 }
 
 static int IS_INCOMPATIBLE_ENCHANT[64][64];
@@ -186,7 +187,9 @@ static void enchant_with_levels_function(uint64_t* rand, ItemStack* is, const vo
 	const int maxLevel = varparams_int_arr[0][2];
 
 	// calculate effective level
-	int level = minLevel + nextInt(rand, maxLevel - minLevel + 1);
+	int level = minLevel;
+	if (minLevel != maxLevel)
+		level += nextInt(rand, maxLevel - minLevel + 1);
 	const int delta = enchantability / 4 + 1;
 	level += 1 + nextInt(rand, delta) + nextInt(rand, delta);
 	const float amplifier = (nextFloat(rand) + nextFloat(rand) - 1.0F) * 0.15F;
@@ -212,8 +215,8 @@ static void enchant_with_levels_function(uint64_t* rand, ItemStack* is, const vo
 		if (vecSize == 0) break;
 
 		index = choose_enchantment(rand, enchantmentVec, vecSize, totalWeight);
-		is->enchantments[is->enchantment_count].enchantment = enchantmentVec[index * 3];
-		is->enchantments[is->enchantment_count].level = enchantmentVec[index * 3 + 1];
+		is->enchantments[is->enchantment_count].enchantment = enchantmentVec[index];
+		is->enchantments[is->enchantment_count].level = enchantmentVec[index + 1];
 		is->enchantment_count++;
 
 		level /= 2;

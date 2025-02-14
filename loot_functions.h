@@ -58,10 +58,6 @@ inline int roll_count_uniform(uint64_t* rand, const int min, const int max)
 // ----------------------------------------------------------------------------------------
 // Loot function initializers
 
-// TODO
-// random enchant
-// enchant with levels
-
 void create_set_count(LootFunction* lf, const int min, const int max);
 void create_set_damage(LootFunction* lf);
 void create_skip_calls(LootFunction* lf, const int skip_count);
@@ -69,6 +65,8 @@ void create_no_op(LootFunction* lf);
 void create_enchant_randomly_one_enchant(LootFunction* lf, const Enchantment enchantment);
 void create_enchant_randomly(LootFunction* lf, const MCVersion version, const ItemType item, const int isTreasure);
 void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const char* item_name, const ItemType item_type, const int min_level, const int max_level, const int isTreasure);
+
+const char* get_enchantment_name(const Enchantment enchantment);
 
 // ----------------------------------------------------------------------------------------
 // Enums

@@ -18,7 +18,7 @@ int main() {
 		for (int j = 0; j < item_stack->enchantment_count; j++)
 		{
 			EnchantInstance* ench = &item_stack->enchantments[j];
-			printf("    eid = %d, lvl = %d\n", ench->enchantment, ench->level);
+			printf("    %s %d\n", get_enchantment_name(ench->enchantment), ench->level);
 		}
 	}
 

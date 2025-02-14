@@ -771,3 +771,66 @@ void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const
 
 	lf->fun = enchant_with_levels_function;
 }
+
+// ----------------------------------------------------------------------------------------
+// Extra utilities
+
+static const char* ENCHANT_NAMES[64] = {
+	"no_enchantment",
+
+	"protection",
+	"fire_protection",
+	"blast_protection",
+	"projectile_protection",
+	"respiration",
+	"aqua_affinity",
+	"thorns",
+	"swift_sneak",
+	"feather_falling",
+	"depth_strider",
+	"frost_walker",
+	"soul_speed",
+
+	"sharpness",
+	"smite",
+	"bane_of_arthropods",
+	"knockback",
+	"fire_aspect",
+	"looting",
+	"sweeping_edge",
+
+	"efficiency",
+	"silk_touch",
+	"fortune",
+
+	"luck_of_the_sea",
+	"lure",
+
+	"power",
+	"punch",
+	"flame",
+	"infinity",
+
+	"quick_charge",
+	"multishot",
+	"piercing",
+
+	"impaling",
+	"riptide",
+	"loyalty",
+	"channeling",
+
+	"density",
+	"breach",
+	"wind_burst",
+
+	"mending",
+	"unbreaking",
+	"curse_of_vanishing",
+	"curse_of_binding"
+};
+
+const char* get_enchantment_name(const Enchantment enchantment)
+{
+	return ENCHANT_NAMES[enchantment];
+}

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef _LOOT_FUNCTIONS_H
+#define _LOOT_FUNCTIONS_H
+
 #include "rng.h"
 #include <inttypes.h>
 
@@ -175,3 +177,4 @@ enum Enchantment {
 	CURSE_OF_BINDING
 };
 
+#endif

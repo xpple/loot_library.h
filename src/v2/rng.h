@@ -406,6 +406,3 @@ uint64_t mulInv(uint64_t x, uint64_t m)
 
 
 #endif /* RNG_H_ */
-
-
-

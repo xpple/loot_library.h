@@ -1,6 +1,6 @@
-#include "loot_table_parser.h"
-
 #include <stdio.h>
+
+#include "../v2/loot_table_parser.h"
 
 
 int main() {

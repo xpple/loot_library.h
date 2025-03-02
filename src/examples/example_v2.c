@@ -4,9 +4,6 @@
 
 
 int main() {
-	//test_enchant_vec();
-	//return 0;
-
 	LootTableContext ctx;
 	init_loot_table("end_city.json", &ctx, (MCVersion)v1_16);
 

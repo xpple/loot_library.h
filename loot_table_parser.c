@@ -10,10 +10,7 @@
 // ------------------------------------------------------------------
 // WARNING!
 // this file contains awful, custom code for parsing json-defined
-// Minecraft loot tables because i couldn't be bothered to use
-// a proper, efficient json parser.
-// I am not responsible for any mental trauma or damaged eyesight
-// looking at the code below may cause. You have been warned.
+// Minecraft loot tables.
 // ------------------------------------------------------------------
 
 

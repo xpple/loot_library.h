@@ -1,6 +1,5 @@
-#include "loot_table_parser.h"
+#include "mc_loot.h"
 #include "loot_functions.h"
-#include "debug_options.h"
 
 #include <stdio.h>
 #include <stdlib.h>

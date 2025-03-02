@@ -1,11 +1,11 @@
 #include <stdio.h>
 
-#include "../v2/loot_table_parser.h"
+#include "../v2/mc_loot.h"
 
 
 int main() {
 	LootTableContext ctx;
-	init_loot_table("end_city.json", &ctx, (MCVersion)v1_16);
+	init_loot_table("src/examples/end_city_treasure.json", &ctx, (MCVersion)v1_21);
 
 	set_loot_seed(&ctx, 123456ULL);
 	generate_loot(&ctx);

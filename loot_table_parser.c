@@ -31,6 +31,8 @@
 
 
 #define ERR(msg) { fprintf(stderr, "ERROR in %s line %d: %s\n", __FILE__, __LINE__, msg); return -1; }
+#define ENABLE_DEBUG_MESSAGES 0
+#define DEBUG_MSG(...) { if (ENABLE_DEBUG_MESSAGES) printf(__VA_ARGS__); }
 
 static char* get_no_whitespace_string(const char* str)
 {
@@ -304,7 +306,7 @@ static void parse_enchant_randomly(LootTableContext* ctx, LootFunction* loot_fun
 	if (defined_enchantment == NULL)
 	{
 		create_enchant_randomly(loot_function, ctx->version, item_type, 1); // FIXME isTreasure is temporarily just set to true
-		DEBUG_MSG("Parsed enchant randomly for %s\n", item_name);
+		//DEBUG_MSG("Parsed enchant randomly for %s\n", item_name);
 		return;
 	}
 
@@ -314,7 +316,7 @@ static void parse_enchant_randomly(LootTableContext* ctx, LootFunction* loot_fun
 	char* short_name = remove_minecraft_prefix(enchantment_name); // 2
 	free(enchantment_name); // 1
 	const Enchantment ench = get_enchantment_from_name(short_name);
-	DEBUG_MSG("Parsed one-enchant (%d, %s) enchant randomly for %s\n", ench, short_name, item_name);
+	//DEBUG_MSG("Parsed one-enchant (%d, %s) enchant randomly for %s\n", ench, short_name, item_name);
 	free(short_name); // 0
 
 	create_enchant_randomly_one_enchant(loot_function, ench);
@@ -339,7 +341,7 @@ static void parse_enchant_with_levels(LootTableContext* ctx, LootFunction* loot_
 
 	create_enchant_with_levels(loot_function, ctx->version, item_name, item_type, min_level, max_level, is_treasure);
 
-	DEBUG_MSG("Parsed enchant with levels for %s: %d - %d, treasure: %d\n", item_name, min_level, max_level, is_treasure);
+	//DEBUG_MSG("Parsed enchant with levels for %s: %d - %d, treasure: %d\n", item_name, min_level, max_level, is_treasure);
 }
 
 // ----------------------------------------------
@@ -359,7 +361,7 @@ static void init_loot_table_items(char* loot_table_string, LootTableContext* ctx
 		cursor++; // won't find the previous key now
 	}
 
-	DEBUG_MSG("Found %d distinct items\n", ctx->item_count);
+	//DEBUG_MSG("Found %d distinct items\n", ctx->item_count);
 
 	// allocate memory for item names
 	ctx->item_names = (char**)malloc(ctx->item_count * sizeof(char*));
@@ -372,7 +374,7 @@ static void init_loot_table_items(char* loot_table_string, LootTableContext* ctx
 		char* name = remove_minecraft_prefix(val);
 		free(val);
 		ctx->item_names[i] = name;
-		DEBUG_MSG("Item %d: %s\n", i, name);
+		//DEBUG_MSG("Item %d: %s\n", i, name);
 
 		cursor = strstr(cursor, "\"name\":") + 8;
 	}
@@ -519,7 +521,7 @@ static void precompute_loot_pool(LootPool* pool, const char* entries_field)
 // private
 static int init_loot_pool(const char* pool_data, const int pool_id, LootTableContext* ctx)
 {
-	DEBUG_MSG("Initializing loot pool %d\n", pool_id);
+	//DEBUG_MSG("Initializing loot pool %d\n", pool_id);
 
 	LootPool* pool = &(ctx->loot_pools[pool_id]);
 	pool->total_weight = 0;
@@ -545,7 +547,7 @@ static int init_loot_pool(const char* pool_data, const int pool_id, LootTableCon
 	// first pass: count total loot functions and create simple entry mappings
 	for (int i = 0; i < pool->entry_count; i++) {
 		char* entry_data = extract_unnamed_object(entries_field, i); // 2
-		DEBUG_MSG("POOL %d:  ENTRY %d\n", pool_id, i);
+		//DEBUG_MSG("POOL %d:  ENTRY %d\n", pool_id, i);
 		init_entry(entry_data, pool, i, ctx);
 		free(entry_data); // 1
 	}
@@ -566,13 +568,13 @@ static int init_loot_pool(const char* pool_data, const int pool_id, LootTableCon
 	// final pass: precompute loot table
 	pool->precomputed_loot = (int*)malloc(pool->total_weight * sizeof(int));
 	if (pool->precomputed_loot == NULL) {
-		DEBUG_MSG("Total weight: %d\n", pool->total_weight);
+		//DEBUG_MSG("Total weight: %d\n", pool->total_weight);
 		ERR("Could not allocate memory for precomputed loot table\n");
 	}
 	
-	DEBUG_MSG("Precomputing pool %d ->\n", pool_id);
+	//DEBUG_MSG("Precomputing pool %d ->\n", pool_id);
 	precompute_loot_pool(pool, entries_field);
-	DEBUG_MSG("-> done, total weight = %d\n\n", pool->total_weight);
+	//DEBUG_MSG("-> done, total weight = %d\n\n", pool->total_weight);
 
 	free(entries_field); // 0
 
@@ -619,7 +621,7 @@ static void free_loot_pool(LootPool* pool)
 
 int init_loot_table(const char* filename, LootTableContext* context, const MCVersion version)
 {
-	DEBUG_MSG("Parsing loot table %s\n", filename);
+	//DEBUG_MSG("Parsing loot table %s\n", filename);
 
 	context->version = version;
 
@@ -655,15 +657,15 @@ int init_loot_table(const char* filename, LootTableContext* context, const MCVer
 
 	// ----------------------------------------------
 
-	DEBUG_MSG("Initializing item name array ---\n");
+	//DEBUG_MSG("Initializing item name array ---\n");
 
 	init_loot_table_items(loot_table_string, context);
 
-	DEBUG_MSG("--- done!\n");
+	//DEBUG_MSG("--- done!\n");
 
 	// ----------------------------------------------
 
-	DEBUG_MSG("Initializing loot pools...\n");
+	//DEBUG_MSG("Initializing loot pools...\n");
 
 	char* pools_field = extract_named_object(loot_table_string, "\"pools\":"); // 2
 	if (pools_field == NULL)
@@ -673,7 +675,7 @@ int init_loot_table(const char* filename, LootTableContext* context, const MCVer
 	context->pool_count = pool_count;
 	context->loot_pools = (LootPool*)malloc(pool_count * sizeof(LootPool));
 
-	DEBUG_MSG("Creating %d loot pools\n", context->pool_count);
+	//DEBUG_MSG("Creating %d loot pools\n", context->pool_count);
 
 	for (int pool_id = 0; pool_id < pool_count; pool_id++) {
 		char* pool_data = extract_unnamed_object(pools_field, pool_id); // 3
@@ -686,7 +688,7 @@ int init_loot_table(const char* filename, LootTableContext* context, const MCVer
 		free(pool_data); // 2
 	}
 
-	DEBUG_MSG("All loot pools were parsed succesfully\n");
+	//DEBUG_MSG("All loot pools were parsed succesfully\n");
 
 	free(pools_field); // 1
 	free(loot_table_string); // 0

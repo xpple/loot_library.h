@@ -277,10 +277,10 @@ static int parse_set_count(LootFunction* loot_function, const cJSON* function_da
 
 static void parse_enchant_randomly(LootTableContext* ctx, LootFunction* loot_function, const char* function_data, const char* item_name)
 {
+	const ItemType item_type = get_item_type(item_name);
+
 	// if the "enchantments" field is present, we need to extract the enchantment name.
 	// otherwise, we can simply create the enchant randomly function
-
-	ItemType item_type = get_item_type(item_name);
 	cJSON* defined_echants = cJSON_GetObjectItem(function_data, "enchantments");
 	if (defined_echants == NULL)
 	{
@@ -288,33 +288,35 @@ static void parse_enchant_randomly(LootTableContext* ctx, LootFunction* loot_fun
 		create_enchant_randomly(loot_function, ctx->version, item_type, 1); // FIXME isTreasure is temporarily just set to true
 		return;
 	}
+
+	// enchant randomly with a given list of enchantments
+	const int ench_count = cJSON_GetArraySize(defined_echants);
+	if (ench_count == 1)
+	{
+		// one-enchant variant
+		const char* ench_name = cJSON_GetArrayItem(defined_echants, 0)->valuestring;
+		const Enchantment ench = get_enchantment_from_name(ench_name);
+		create_enchant_randomly_one_enchant(loot_function, ench);
+	}
 	else
 	{
-		// enchant randomly with a given list of enchantments
-		const int ench_count = cJSON_GetArraySize(defined_echants);
+		// multi-enchant variant
+		Enchantment* enchs = (Enchantment*)malloc(ench_count * sizeof(Enchantment));
+		if (enchs == NULL) return; // FIXME add logging
 
+		int i = 0;
+		cJSON* element = NULL;
+		cJSON_ArrayForEach(element, defined_echants)
+		{
+			const char* ench_name = cJSON_GetStringValue(element);
+			const Enchantment ench = get_enchantment_from_name(ench_name);
+			enchs[i] = ench;
+			i++;
+		}
+
+		create_enchant_randomly_list(loot_function, enchs, ench_count);
+		free(enchs);
 	}
-
-
-	//char* defined_enchantment = extract_named_object(function_data, "\"enchantments\":"); // 1
-
-	//if (defined_enchantment == NULL)
-	//{
-	//	create_enchant_randomly(loot_function, ctx->version, item_type, 1); // FIXME isTreasure is temporarily just set to true
-	//	//DEBUG_MSG("Parsed enchant randomly for %s\n", item_name);
-	//	return;
-	//}
-
-	//// extract enchantment index from enchantment name
-	//char* enchantment_name = substr(defined_enchantment, 1, (int)strlen(defined_enchantment) - 2); // 2
-	//free(defined_enchantment); // 1
-	//char* short_name = remove_minecraft_prefix(enchantment_name); // 2
-	//free(enchantment_name); // 1
-	//const Enchantment ench = get_enchantment_from_name(short_name);
-	////DEBUG_MSG("Parsed one-enchant (%d, %s) enchant randomly for %s\n", ench, short_name, item_name);
-	//free(short_name); // 0
-
-	//create_enchant_randomly_one_enchant(loot_function, ench);
 }
 
 static void parse_enchant_with_levels(LootTableContext* ctx, LootFunction* loot_function, cJSON* function_data, const char* item_name)

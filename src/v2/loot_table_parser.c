@@ -194,7 +194,7 @@ static void parse_enchant_with_levels(LootTableContext* ctx, LootFunction* loot_
 
 // ----------------------------------------------
 
-
+// OK
 static void init_loot_table_items(const cJSON* loot_table, LootTableContext* ctx)
 {
 	// count how many item entries there are in the loot table
@@ -254,12 +254,14 @@ static void init_rolls(const cJSON* pool_data, LootPool* pool)
 		// constant roll
 		pool->min_rolls = rolls->valueint;
 		pool->max_rolls = rolls->valueint;
+		pool->roll_count_function = roll_count_constant;
 	}
 	else
 	{
 		// uniform roll
 		pool->min_rolls = cJSON_GetObjectItem(rolls, "min")->valueint;
 		pool->max_rolls = cJSON_GetObjectItem(rolls, "max")->valueint;
+		pool->roll_count_function = roll_count_uniform;
 	}
 }
 
@@ -272,8 +274,9 @@ static void map_entry_to_item(const cJSON* entry_data, LootTableContext* ctx, in
 		return; 
 	}
 
+	const char* name_str = cJSON_GetStringValue(name);
 	for (int i = 0; i < ctx->item_count; i++) {
-		if (strcmp(ctx->item_names[i], name) == 0) {
+		if (strcmp(ctx->item_names[i], name_str) == 0) {
 			*item_id = i;
 			break;
 		}
@@ -290,8 +293,8 @@ static void init_entry(const cJSON* entry_data, LootPool* pool, const int entry_
 		functions = cJSON_GetArraySize(functions_field);
 	}
 
-	int w = cJSON_GetObjectItem(entry_data, "weight")->valueint;
-	pool->total_weight += w;
+	cJSON* weight_element = cJSON_GetObjectItem(entry_data, "weight");
+	pool->total_weight += weight_element == NULL ? 1 : weight_element->valueint;
 
 	// initialize loot function fields
 
@@ -319,6 +322,9 @@ static void init_entry_functions(const cJSON* entry_data, LootPool* pool, const 
 	
 	const int entry_item = pool->entry_to_item[entry_id];
 	const char* entry_item_name = entry_item == -1 ? NULL : ctx->item_names[entry_item];
+	if (entry_item_name == NULL)
+		return; // empty entry
+
 	int findex = pool->entry_functions_index[entry_id];
 	int fcount = pool->entry_functions_count[entry_id];
 
@@ -355,9 +361,10 @@ static void precompute_loot_pool(LootPool* pool, const cJSON* entries_field)
 
 	for (int i = 0; i < pool->entry_count; i++) {
 		cJSON* entry = cJSON_GetArrayItem(entries_field, i);
-		int entry_weight = cJSON_GetObjectItem(entry, "weight")->valueint;
+		cJSON* entry_weight = cJSON_GetObjectItem(entry, "weight");
+		int w = entry_weight == NULL ? 1 : entry_weight->valueint;
 
-		for (int j = 0; j < entry_weight; j++) {
+		for (int j = 0; j < w; j++) {
 			pool->precomputed_loot[index] = i;
 			index++;
 		}
@@ -448,6 +455,7 @@ static void free_loot_pool(LootPool* pool)
 
 // -------------------------------------------------------------------------------------
 
+// OK
 int init_loot_table(const char* filename, LootTableContext* context, const MCVersion version)
 {
 	context->version = version;

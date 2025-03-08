@@ -5,7 +5,7 @@
 
 int main() {
 	LootTableContext ctx;
-	init_loot_table("src/examples/end_city_treasure.json", &ctx, (MCVersion)v1_21);
+	init_loot_table("src/examples/end_city_treasure.json", &ctx, (MCVersion)v1_16);
 
 	set_loot_seed(&ctx, 123456ULL);
 	generate_loot(&ctx);

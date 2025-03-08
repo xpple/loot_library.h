@@ -580,6 +580,7 @@ static int init_loot_pool(const char* pool_data, const int pool_id, LootTableCon
 	return 0;
 }
 
+// OK
 static void free_loot_function(LootFunction* lf)
 {
 	if (lf->varparams_int != NULL)
@@ -597,7 +598,7 @@ static void free_loot_function(LootFunction* lf)
 	lf->fun = NULL;
 }
 
-// private
+// OK
 static void free_loot_pool(LootPool* pool)
 {
 	free(pool->precomputed_loot);
@@ -616,24 +617,20 @@ static void free_loot_pool(LootPool* pool)
 }
 
 // -------------------------------------------------------------------------------------
-// the public API
 
 int init_loot_table(const char* filename, LootTableContext* context, const MCVersion version)
 {
-	//DEBUG_MSG("Parsing loot table %s\n", filename);
-
 	context->version = version;
 
-	// open the file, read the content, close the file.
-
+	// open the file
 	FILE* fptr = fopen(filename, "r");
 	if (fptr == NULL)
 		ERR("Could not open file");
-
 	fseek(fptr, 0, SEEK_END);
 	size_t file_size = ftell(fptr);	// get the size of the file
 	fseek(fptr, 0, SEEK_SET);		// go back to the beginning of the file
 
+	// allocate memory for file contents
 	char* file_content = (char*)malloc(file_size + 1); // 1
 	if (file_content == NULL) {
 		fclose(fptr);
@@ -651,49 +648,12 @@ int init_loot_table(const char* filename, LootTableContext* context, const MCVer
 	file_content[file_size] = '\0';
 	fclose(fptr);
 
-	char* loot_table_string = get_no_whitespace_string(file_content); // 2
+	// TODO
+
 	free(file_content); // 1
-
-	// ----------------------------------------------
-
-	//DEBUG_MSG("Initializing item name array ---\n");
-
-	init_loot_table_items(loot_table_string, context);
-
-	//DEBUG_MSG("--- done!\n");
-
-	// ----------------------------------------------
-
-	//DEBUG_MSG("Initializing loot pools...\n");
-
-	char* pools_field = extract_named_object(loot_table_string, "\"pools\":"); // 2
-	if (pools_field == NULL)
-		ERR("Loot table does not declare any pools");
-
-	int pool_count = count_unnamed(pools_field);
-	context->pool_count = pool_count;
-	context->loot_pools = (LootPool*)malloc(pool_count * sizeof(LootPool));
-
-	//DEBUG_MSG("Creating %d loot pools\n", context->pool_count);
-
-	for (int pool_id = 0; pool_id < pool_count; pool_id++) {
-		char* pool_data = extract_unnamed_object(pools_field, pool_id); // 3
-		//DEBUG_MSG("%s\n\n", pools_field);
-
-		int ret = init_loot_pool(pool_data, pool_id, context);
-		if (ret != 0)
-			ERR("Error while initializing loot pool");
-
-		free(pool_data); // 2
-	}
-
-	//DEBUG_MSG("All loot pools were parsed succesfully\n");
-
-	free(pools_field); // 1
-	free(loot_table_string); // 0
-	return 0;
 }
 
+// OK
 void free_loot_table(LootTableContext* context)
 {
 	// free item name arrays

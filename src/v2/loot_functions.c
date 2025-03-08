@@ -732,6 +732,22 @@ void create_enchant_randomly_one_enchant(LootFunction* lf, const Enchantment enc
 	lf->fun = set_enchantment_random_level_function;
 }
 
+void create_enchant_randomly_list(LootFunction* lf, const Enchantment* list, const int list_length)
+{
+	init_function(lf);
+	lf->varparams_int = (int*)malloc((2 * list_length + 1) * sizeof(int));
+	lf->params = lf->varparams_int;
+	lf->varparams_int[0] = list_length;
+
+	for (int i = 0; i < list_length; i++)
+	{
+		lf->varparams_int[1 + 2 * i] = list[i];
+		lf->varparams_int[1 + 2 * i + 1] = get_max_level(list[i]);
+	}
+
+	lf->fun = enchant_randomly_function;
+}
+
 void create_enchant_randomly(LootFunction* lf, const MCVersion version, const ItemType item, const int isTreasure)
 {
 	int enchantCount = get_applicable_enchantments(item, version, NULL, 1);

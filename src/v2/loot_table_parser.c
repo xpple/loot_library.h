@@ -6,33 +6,9 @@
 #include <string.h>
 #include <ctype.h>
 
-// ------------------------------------------------------------------
-// WARNING!
-// this file contains awful, custom code for parsing json-defined
-// Minecraft loot tables.
-// ------------------------------------------------------------------
+#include "cjson/CJSON.h"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#define ERR(msg) { fprintf(stderr, "ERROR in %s line %d: %s\n", __FILE__, __LINE__, msg); return -1; }
-#define ENABLE_DEBUG_MESSAGES 0
-#define DEBUG_MSG(...) { if (ENABLE_DEBUG_MESSAGES) printf(__VA_ARGS__); }
-
+/*
 static char* get_no_whitespace_string(const char* str)
 {
 	int len = (int)strlen(str);
@@ -192,7 +168,9 @@ static int extract_int(const char* jsonstr, const char* key, const int or_else)
 	free(value);
 	return result;
 }
+*/
 
+// OK
 static ItemType get_item_type(const char* item_name)
 {
 	if (strstr(item_name, "_pickaxe") != NULL) return PICKAXE;
@@ -215,6 +193,7 @@ static ItemType get_item_type(const char* item_name)
 	return NO_ITEM;
 }
 
+// OK
 static Enchantment get_enchantment_from_name(const char* ench)
 {
 	// I'm sorry.
@@ -275,23 +254,25 @@ static Enchantment get_enchantment_from_name(const char* ench)
 // ----------------------------------------------
 // loot function parsers
 
-static int parse_set_count(LootFunction* loot_function, const char* function_data)
+// OK
+static int parse_set_count(LootFunction* loot_function, const cJSON* function_data)
 {
-	char* count_field = extract_named_object(function_data, "\"count\":"); // 1
-	if (count_field == NULL)
-		ERR("set_count function does not declare a count field");
+	cJSON* count = cJSON_GetObjectItem(function_data, "count");
 
-	int min_i = extract_int(count_field, "\"min\":", -1);
-	int max_i = extract_int(count_field, "\"max\":", -1);
-
-	if (min_i == -1 || max_i == -1) {
-		min_i = max_i = atoi(count_field);
+	if (cJSON_IsNumber(count))
+	{
+		// constant count
+		create_set_count(loot_function, count->valueint, count->valueint);
+		return 0;
 	}
-
-	free(count_field); // 0
-
-	create_set_count(loot_function, min_i, max_i);
-	return 0;
+	else
+	{
+		// uniformly rolled count
+		const int min = cJSON_GetObjectItem(count, "min")->valueint;
+		const int max = cJSON_GetObjectItem(count, "max")->valueint;
+		create_set_count(loot_function, min, max);
+		return 0;
+	}
 }
 
 static void parse_enchant_randomly(LootTableContext* ctx, LootFunction* loot_function, const char* function_data, const char* item_name)
@@ -300,28 +281,43 @@ static void parse_enchant_randomly(LootTableContext* ctx, LootFunction* loot_fun
 	// otherwise, we can simply create the enchant randomly function
 
 	ItemType item_type = get_item_type(item_name);
-	char* defined_enchantment = extract_named_object(function_data, "\"enchantments\":"); // 1
-
-	if (defined_enchantment == NULL)
+	cJSON* defined_echants = cJSON_GetObjectItem(function_data, "enchantments");
+	if (defined_echants == NULL)
 	{
+		// no-restriction enchant randomly
 		create_enchant_randomly(loot_function, ctx->version, item_type, 1); // FIXME isTreasure is temporarily just set to true
-		//DEBUG_MSG("Parsed enchant randomly for %s\n", item_name);
 		return;
 	}
+	else
+	{
+		// enchant randomly with a given list of enchantments
+		const int ench_count = cJSON_GetArraySize(defined_echants);
 
-	// extract enchantment index from enchantment name
-	char* enchantment_name = substr(defined_enchantment, 1, (int)strlen(defined_enchantment) - 2); // 2
-	free(defined_enchantment); // 1
-	char* short_name = remove_minecraft_prefix(enchantment_name); // 2
-	free(enchantment_name); // 1
-	const Enchantment ench = get_enchantment_from_name(short_name);
-	//DEBUG_MSG("Parsed one-enchant (%d, %s) enchant randomly for %s\n", ench, short_name, item_name);
-	free(short_name); // 0
+	}
 
-	create_enchant_randomly_one_enchant(loot_function, ench);
+
+	//char* defined_enchantment = extract_named_object(function_data, "\"enchantments\":"); // 1
+
+	//if (defined_enchantment == NULL)
+	//{
+	//	create_enchant_randomly(loot_function, ctx->version, item_type, 1); // FIXME isTreasure is temporarily just set to true
+	//	//DEBUG_MSG("Parsed enchant randomly for %s\n", item_name);
+	//	return;
+	//}
+
+	//// extract enchantment index from enchantment name
+	//char* enchantment_name = substr(defined_enchantment, 1, (int)strlen(defined_enchantment) - 2); // 2
+	//free(defined_enchantment); // 1
+	//char* short_name = remove_minecraft_prefix(enchantment_name); // 2
+	//free(enchantment_name); // 1
+	//const Enchantment ench = get_enchantment_from_name(short_name);
+	////DEBUG_MSG("Parsed one-enchant (%d, %s) enchant randomly for %s\n", ench, short_name, item_name);
+	//free(short_name); // 0
+
+	//create_enchant_randomly_one_enchant(loot_function, ench);
 }
 
-static void parse_enchant_with_levels(LootTableContext* ctx, LootFunction* loot_function, const char* function_data, const char* item_name)
+static void parse_enchant_with_levels(LootTableContext* ctx, LootFunction* loot_function, cJSON* function_data, const char* item_name)
 {
 	ItemType item_type = get_item_type(item_name);
 

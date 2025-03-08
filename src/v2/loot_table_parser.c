@@ -140,7 +140,7 @@ static void parse_enchant_randomly(LootTableContext* ctx, LootFunction* loot_fun
 	else
 	{
 		// multi-enchant variant
-		Enchantment* enchs = (Enchantment*)malloc(ench_count * sizeof(Enchantment));
+		Enchantment* enchs = (Enchantment*)malloc(ench_count * sizeof(Enchantment)); // 1
 		if (enchs == NULL) return; // FIXME add logging
 
 		int i = 0;
@@ -154,7 +154,7 @@ static void parse_enchant_randomly(LootTableContext* ctx, LootFunction* loot_fun
 		}
 
 		create_enchant_randomly_list(loot_function, enchs, ench_count);
-		free(enchs);
+		free(enchs); // 0
 	}
 }
 
@@ -263,36 +263,34 @@ static void init_rolls(const cJSON* pool_data, LootPool* pool)
 	}
 }
 
+// OK
 static void map_entry_to_item(const cJSON* entry_data, LootTableContext* ctx, int* item_id)
 {
-	char* name_field = extract_named_object(entry_data, "\"name\":"); // 1
-	if (name_field == NULL) {
+	cJSON* name = cJSON_GetObjectItem(entry_data, "name");
+	if (name == NULL) {
 		*item_id = -1; // empty entry
 		return; 
 	}
 
-	char* iname = remove_minecraft_prefix(name_field); // 2
 	for (int i = 0; i < ctx->item_count; i++) {
-		if (strcmp(ctx->item_names[i], iname) == 0) {
+		if (strcmp(ctx->item_names[i], name) == 0) {
 			*item_id = i;
 			break;
 		}
 	}
-	free(iname); // 1
-	free(name_field); // 0
 }
 
+// OK
 static void init_entry(const cJSON* entry_data, LootPool* pool, const int entry_id, LootTableContext* ctx)
 {
 	int functions = 0;
 
-	char* functions_field = extract_named_object(entry_data, "\"functions\":"); // 1
+	cJSON* functions_field = cJSON_GetObjectItem(entry_data, "functions");
 	if (functions_field != NULL) {
-		functions = count_unnamed(functions_field);
-		free(functions_field); // 0
+		functions = cJSON_GetArraySize(functions_field);
 	}
 
-	int w = extract_int(entry_data, "\"weight\":", 1);
+	int w = cJSON_GetObjectItem(entry_data, "weight")->valueint;
 	pool->total_weight += w;
 
 	// initialize loot function fields
@@ -312,9 +310,10 @@ static void init_entry(const cJSON* entry_data, LootPool* pool, const int entry_
 	// because we need to know the total number of functions to allocate the array
 }
 
+// OK
 static void init_entry_functions(const cJSON* entry_data, LootPool* pool, const int entry_id, LootTableContext* ctx)
 {
-	char* functions_field = extract_named_object(entry_data, "\"functions\":"); // 1
+	cJSON* functions_field = cJSON_GetObjectItem(entry_data, "functions");
 	if (functions_field == NULL)
 		return;
 	
@@ -327,48 +326,41 @@ static void init_entry_functions(const cJSON* entry_data, LootPool* pool, const 
 		int index_in_array = findex + i;
 		LootFunction* loot_function = &(pool->loot_functions[index_in_array]);
 
-		char* function_data = extract_unnamed_object(functions_field, i); // 2
-		char* function_name = extract_named_object(function_data, "\"function\":"); // 3
+		cJSON* function_data = cJSON_GetArrayItem(functions_field, i);
+		char* function_name = cJSON_GetStringValue(cJSON_GetObjectItem(function_data, "function"));
 
-		if (strcmp(function_name, "\"minecraft:set_count\"") == 0) {
+		if (strcmp(function_name, "minecraft:set_count") == 0) {
 			parse_set_count(loot_function, function_data);
 		}
-		else if (strcmp(function_name, "\"minecraft:enchant_with_levels\"") == 0) {
+		else if (strcmp(function_name, "minecraft:enchant_with_levels") == 0) {
 			parse_enchant_with_levels(ctx, loot_function, function_data, entry_item_name);
 		}
-		else if (strcmp(function_name, "\"minecraft:enchant_randomly\"") == 0) {
+		else if (strcmp(function_name, "minecraft:enchant_randomly") == 0) {
 			parse_enchant_randomly(ctx, loot_function, function_data, entry_item_name);
 		}
-		else if (strcmp(function_name, "\"minecraft:set_damage\"") == 0) {
+		else if (strcmp(function_name, "minecraft:set_damage") == 0) {
 			// inline parsing here, it's a very simple function
 			create_set_damage(loot_function);
 		}
 		else {
 			create_no_op(loot_function);
 		}
-
-		free(function_data); // 2
-		free(function_name); // 1
 	}
-
-	free(functions_field); // 0
-	return;
 }
 
+// OK
 static void precompute_loot_pool(LootPool* pool, const cJSON* entries_field)
 {
 	int index = 0;
 
 	for (int i = 0; i < pool->entry_count; i++) {
-		char* entry_data = extract_unnamed_object(entries_field, i); // 1
-		int entry_weight = extract_int(entry_data, "\"weight\":", 1);
+		cJSON* entry = cJSON_GetArrayItem(entries_field, i);
+		int entry_weight = cJSON_GetObjectItem(entry, "weight")->valueint;
 
 		for (int j = 0; j < entry_weight; j++) {
 			pool->precomputed_loot[index] = i;
 			index++;
 		}
-
-		free(entry_data); // 0
 	}
 }
 
@@ -493,7 +485,28 @@ int init_loot_table(const char* filename, LootTableContext* context, const MCVer
 	}
 	free(file_content); // 1
 
-	// TODO
+	// initialize item names
+	init_loot_table_items(loot_table, context);
+
+	// count loot pools
+	const cJSON* pools = cJSON_GetObjectItem(loot_table, "pools");
+	context->pool_count = cJSON_GetArraySize(pools);
+
+	// allocate memory for loot pools
+	context->loot_pools = (LootPool*)malloc(context->pool_count * sizeof(LootPool));
+	if (context->loot_pools == NULL) {
+		cJSON_Delete(loot_table);
+		return -1;
+	}
+
+	// initialize loot pools
+	for (int i = 0; i < context->pool_count; i++) {
+		if (init_loot_pool(cJSON_GetArrayItem(pools, i), i, context) != 0) {
+			cJSON_Delete(loot_table);
+			free_loot_table(context);
+			return -1;
+		}
+	}
 
 	cJSON_Delete(loot_table);
 	return 0;

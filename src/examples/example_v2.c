@@ -4,8 +4,11 @@
 
 
 int main() {
+	//test_enchant_vec();
+	//return 0;
+
 	LootTableContext ctx;
-	init_loot_table("src/examples/end_city_treasure.json", &ctx, (MCVersion)v1_16);
+	init_loot_table("src/examples/end_city_treasure.json", &ctx, (MCVersion)v1_21);
 
 	set_loot_seed(&ctx, 123456ULL);
 	generate_loot(&ctx);

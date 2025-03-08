@@ -872,10 +872,10 @@ const char* get_enchantment_name(const Enchantment enchantment)
 void test_enchant_vec()
 {
 	int applicable[64];
-	int num_applicable = get_applicable_enchantments(SWORD, v1_16, applicable, 0);
+	int num_applicable = get_applicable_enchantments(HELMET, v1_16, applicable, 0);
 
 	int vec[128];
-	int size = get_enchant_level_vector(39, applicable, num_applicable, vec);
+	int size = get_enchant_level_vector(29, applicable, num_applicable, vec);
 
 	for (int i = 0; i < size; i++)
 	{

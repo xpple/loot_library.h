@@ -178,4 +178,7 @@ enum Enchantment {
 	CURSE_OF_BINDING
 };
 
+// test TODO remove
+void test_enchant_vec();
+
 #endif

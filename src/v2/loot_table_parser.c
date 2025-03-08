@@ -34,54 +34,54 @@ static ItemType get_item_type(const char* item_name)
 static Enchantment get_enchantment_from_name(const char* ench)
 {
 	// I'm sorry.
-	if (strcmp(ench, "protection") == 0) return PROTECTION;
-	if (strcmp(ench, "fire_protection") == 0) return FIRE_PROTECTION;
-	if (strcmp(ench, "feather_falling") == 0) return FEATHER_FALLING;
-	if (strcmp(ench, "blast_protection") == 0) return BLAST_PROTECTION;
-	if (strcmp(ench, "projectile_protection") == 0) return PROJECTILE_PROTECTION;
-	if (strcmp(ench, "respiration") == 0) return RESPIRATION;
-	if (strcmp(ench, "aqua_affinity") == 0) return AQUA_AFFINITY;
-	if (strcmp(ench, "thorns") == 0) return THORNS;
-	if (strcmp(ench, "soul_speed") == 0) return SOUL_SPEED;
-	if (strcmp(ench, "depth_strider") == 0) return DEPTH_STRIDER;
-	if (strcmp(ench, "frost_walker") == 0) return FROST_WALKER;
-	if (strcmp(ench, "swift_sneak") == 0) return SWIFT_SNEAK;
+	if (strcmp(ench, "minecraft:protection") == 0) return PROTECTION;
+	if (strcmp(ench, "minecraft:fire_protection") == 0) return FIRE_PROTECTION;
+	if (strcmp(ench, "minecraft:feather_falling") == 0) return FEATHER_FALLING;
+	if (strcmp(ench, "minecraft:blast_protection") == 0) return BLAST_PROTECTION;
+	if (strcmp(ench, "minecraft:projectile_protection") == 0) return PROJECTILE_PROTECTION;
+	if (strcmp(ench, "minecraft:respiration") == 0) return RESPIRATION;
+	if (strcmp(ench, "minecraft:aqua_affinity") == 0) return AQUA_AFFINITY;
+	if (strcmp(ench, "minecraft:thorns") == 0) return THORNS;
+	if (strcmp(ench, "minecraft:soul_speed") == 0) return SOUL_SPEED;
+	if (strcmp(ench, "minecraft:depth_strider") == 0) return DEPTH_STRIDER;
+	if (strcmp(ench, "minecraft:frost_walker") == 0) return FROST_WALKER;
+	if (strcmp(ench, "minecraft:swift_sneak") == 0) return SWIFT_SNEAK;
 	
-	if (strcmp(ench, "sharpness") == 0) return SHARPNESS;
-	if (strcmp(ench, "smite") == 0) return SMITE;
-	if (strcmp(ench, "bane_of_arthropods") == 0) return BANE_OF_ARTHROPODS;
-	if (strcmp(ench, "knockback") == 0) return KNOCKBACK;
-	if (strcmp(ench, "fire_aspect") == 0) return FIRE_ASPECT;
-	if (strcmp(ench, "looting") == 0) return LOOTING;
+	if (strcmp(ench, "minecraft:sharpness") == 0) return SHARPNESS;
+	if (strcmp(ench, "minecraft:smite") == 0) return SMITE;
+	if (strcmp(ench, "minecraft:bane_of_arthropods") == 0) return BANE_OF_ARTHROPODS;
+	if (strcmp(ench, "minecraft:knockback") == 0) return KNOCKBACK;
+	if (strcmp(ench, "minecraft:fire_aspect") == 0) return FIRE_ASPECT;
+	if (strcmp(ench, "minecraft:looting") == 0) return LOOTING;
 	if (strstr(ench, "sweeping") != NULL) return SWEEPING_EDGE;
 
-	if (strcmp(ench, "efficiency") == 0) return EFFICIENCY;
-	if (strcmp(ench, "silk_touch") == 0) return SILK_TOUCH;
-	if (strcmp(ench, "fortune") == 0) return FORTUNE;
+	if (strcmp(ench, "minecraft:efficiency") == 0) return EFFICIENCY;
+	if (strcmp(ench, "minecraft:silk_touch") == 0) return SILK_TOUCH;
+	if (strcmp(ench, "minecraft:fortune") == 0) return FORTUNE;
 
-	if (strcmp(ench, "power") == 0) return POWER;
-	if (strcmp(ench, "flame") == 0) return FLAME;
-	if (strcmp(ench, "infinity") == 0) return INFINITY_ENCHANTMENT;
-	if (strcmp(ench, "punch") == 0) return PUNCH;
+	if (strcmp(ench, "minecraft:power") == 0) return POWER;
+	if (strcmp(ench, "minecraft:flame") == 0) return FLAME;
+	if (strcmp(ench, "minecraft:infinity") == 0) return INFINITY_ENCHANTMENT;
+	if (strcmp(ench, "minecraft:punch") == 0) return PUNCH;
 
-	if (strcmp(ench, "multishot") == 0) return MULTISHOT;
-	if (strcmp(ench, "quick_charge") == 0) return QUICK_CHARGE;
-	if (strcmp(ench, "piercing") == 0) return PIERCING;
-
-	if (strcmp(ench, "impaling") == 0) return IMPALING;
-	if (strcmp(ench, "loyalty") == 0) return LOYALTY;
-	if (strcmp(ench, "riptide") == 0) return RIPTIDE;
-	if (strcmp(ench, "channeling") == 0) return CHANNELING;
-
-	if (strcmp(ench, "luck_of_the_sea") == 0) return LUCK_OF_THE_SEA;
-	if (strcmp(ench, "lure") == 0) return LURE;
-
-	if (strcmp(ench, "density") == 0) return DENSITY;
-	if (strcmp(ench, "breach") == 0) return BREACH;
-	if (strcmp(ench, "wind_burst") == 0) return WIND_BURST;
-
-	if (strcmp(ench, "mending") == 0) return MENDING;
-	if (strcmp(ench, "unbreaking") == 0) return UNBREAKING;
+	if (strcmp(ench, "minecraft:multishot") == 0) return MULTISHOT;
+	if (strcmp(ench, "minecraft:quick_charge") == 0) return QUICK_CHARGE;
+	if (strcmp(ench, "minecraft:piercing") == 0) return PIERCING;
+					 
+	if (strcmp(ench, "minecraft:impaling") == 0) return IMPALING;
+	if (strcmp(ench, "minecraft:loyalty") == 0) return LOYALTY;
+	if (strcmp(ench, "minecraft:riptide") == 0) return RIPTIDE;
+	if (strcmp(ench, "minecraft:channeling") == 0) return CHANNELING;
+					  
+	if (strcmp(ench, "minecraft:luck_of_the_sea") == 0) return LUCK_OF_THE_SEA;
+	if (strcmp(ench, "minecraft:lure") == 0) return LURE;
+					  
+	if (strcmp(ench, "minecraft:density") == 0) return DENSITY;
+	if (strcmp(ench, "minecraft:breach") == 0) return BREACH;
+	if (strcmp(ench, "minecraft:wind_burst") == 0) return WIND_BURST;
+					 
+	if (strcmp(ench, "minecraft:mending") == 0) return MENDING;
+	if (strcmp(ench, "minecraft:unbreaking") == 0) return UNBREAKING;
 	if (strstr(ench, "binding") != NULL) return CURSE_OF_BINDING;
 	if (strstr(ench, "vanishing") != NULL) return CURSE_OF_VANISHING;
 

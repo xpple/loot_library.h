@@ -275,7 +275,8 @@ static int parse_set_count(LootFunction* loot_function, const cJSON* function_da
 	}
 }
 
-static void parse_enchant_randomly(LootTableContext* ctx, LootFunction* loot_function, const char* function_data, const char* item_name)
+// OK
+static void parse_enchant_randomly(LootTableContext* ctx, LootFunction* loot_function, const cJSON* function_data, const char* item_name)
 {
 	const ItemType item_type = get_item_type(item_name);
 
@@ -319,32 +320,43 @@ static void parse_enchant_randomly(LootTableContext* ctx, LootFunction* loot_fun
 	}
 }
 
-static void parse_enchant_with_levels(LootTableContext* ctx, LootFunction* loot_function, cJSON* function_data, const char* item_name)
+// OK
+static void parse_enchant_with_levels(LootTableContext* ctx, LootFunction* loot_function, const cJSON* function_data, const char* item_name)
 {
-	ItemType item_type = get_item_type(item_name);
+	const ItemType item_type = get_item_type(item_name);
 
-	// need: min level, max level, isTreasure
-	char* levels_object = extract_named_object(function_data, "\"levels\":"); // 1
-	int min_level = extract_int(levels_object, "\"min\":", 0);
-	int max_level = extract_int(levels_object, "\"max\":", 0);
-	if (min_level == 0 && max_level == 0)
-		min_level = max_level = atoi(levels_object); // levels = some constant
-	free(levels_object); // 0
+	int min_level = 0;
+	int max_level = 0;
+	int is_treasure = 1;
 
-	char* is_treasure_field = extract_named_object(function_data, "\"treasure\":"); // 1
-	int is_treasure = (is_treasure_field == NULL || strcmp(is_treasure_field, "true") == 0) ? 1 : 0;
-	if (is_treasure_field != NULL) 
-		free(is_treasure_field); // 0
+	cJSON* levels = cJSON_GetObjectItem(function_data, "levels");
+	if (cJSON_IsNumber(levels))
+	{
+		min_level = levels->valueint;
+		max_level = levels->valueint;
+	}
+	else if (levels != NULL)
+	{
+		min_level = cJSON_GetObjectItem(levels, "min")->valueint;
+		max_level = cJSON_GetObjectItem(levels, "max")->valueint;
+	}
 
-	create_enchant_with_levels(loot_function, ctx->version, item_name, item_type, min_level, max_level, is_treasure);
+	cJSON* treasure = cJSON_GetObjectItem(function_data, "treasure");
+	if (treasure != NULL)
+		is_treasure = (int)cJSON_IsTrue(treasure);
 
-	//DEBUG_MSG("Parsed enchant with levels for %s: %d - %d, treasure: %d\n", item_name, min_level, max_level, is_treasure);
+	create_enchant_with_levels(
+		loot_function, 
+		ctx->version, 
+		item_name, item_type, 
+		min_level, max_level, 
+		is_treasure
+	);
 }
 
 // ----------------------------------------------
 
 
-// private
 static void init_loot_table_items(char* loot_table_string, LootTableContext* ctx)
 {
 	char* cursor = loot_table_string;
@@ -377,32 +389,27 @@ static void init_loot_table_items(char* loot_table_string, LootTableContext* ctx
 	}
 }
 
-// private
-static int init_rolls(const char* pool_data, LootPool* pool)
+// OK
+static int init_rolls(const cJSON* pool_data, LootPool* pool)
 {
-	char* rolls_field = extract_named_object(pool_data, "\"rolls\":"); // 1
-	if (rolls_field == NULL)
-		return -1;
+	cJSON* rolls = cJSON_GetObjectItem(pool_data, "rolls");
 
-	int minrolls = extract_int(rolls_field, "\"min\":", -1);
-	int maxrolls = extract_int(rolls_field, "\"max\":", -1);
-	pool->min_rolls = minrolls;
-	pool->max_rolls = maxrolls;
-	pool->roll_count_function = roll_count_uniform;
-
-	if (minrolls == -1 || maxrolls == -1) {
+	if (cJSON_IsNumber(rolls))
+	{
 		// constant roll
-		int rolls_i = atoi(rolls_field);
-		pool->min_rolls = rolls_i;
-		pool->max_rolls = rolls_i;
-		pool->roll_count_function = roll_count_constant;
+		pool->min_rolls = rolls->valueint;
+		pool->max_rolls = rolls->valueint;
+	}
+	else
+	{
+		// uniform roll
+		pool->min_rolls = cJSON_GetObjectItem(rolls, "min")->valueint;
+		pool->max_rolls = cJSON_GetObjectItem(rolls, "max")->valueint;
 	}
 
-	free(rolls_field); // 0
 	return 0;
 }
 
-// private
 static void map_entry_to_item(const char* entry_data, LootTableContext* ctx, int* item_id)
 {
 	char* name_field = extract_named_object(entry_data, "\"name\":"); // 1
@@ -422,7 +429,6 @@ static void map_entry_to_item(const char* entry_data, LootTableContext* ctx, int
 	free(name_field); // 0
 }
 
-// private
 static void init_entry(const char* entry_data, LootPool* pool, const int entry_id, LootTableContext* ctx)
 {
 	int functions = 0;
@@ -453,7 +459,6 @@ static void init_entry(const char* entry_data, LootPool* pool, const int entry_i
 	// because we need to know the total number of functions to allocate the array
 }
 
-// private
 static void init_entry_functions(const char* entry_data, LootPool* pool, const int entry_id, LootTableContext* ctx)
 {
 	char* functions_field = extract_named_object(entry_data, "\"functions\":"); // 1
@@ -497,7 +502,6 @@ static void init_entry_functions(const char* entry_data, LootPool* pool, const i
 	return;
 }
 
-// private
 static void precompute_loot_pool(LootPool* pool, const char* entries_field)
 {
 	int index = 0;
@@ -515,7 +519,6 @@ static void precompute_loot_pool(LootPool* pool, const char* entries_field)
 	}
 }
 
-// private
 static int init_loot_pool(const char* pool_data, const int pool_id, LootTableContext* ctx)
 {
 	//DEBUG_MSG("Initializing loot pool %d\n", pool_id);

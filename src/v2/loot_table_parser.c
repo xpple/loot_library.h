@@ -8,7 +8,7 @@
 
 #include "cjson/CJSON.h"
 
-// OK
+
 static ItemType get_item_type(const char* item_name)
 {
 	if (strstr(item_name, "_pickaxe") != NULL) return PICKAXE;
@@ -31,7 +31,6 @@ static ItemType get_item_type(const char* item_name)
 	return NO_ITEM;
 }
 
-// OK
 static Enchantment get_enchantment_from_name(const char* ench)
 {
 	// I'm sorry.
@@ -92,7 +91,6 @@ static Enchantment get_enchantment_from_name(const char* ench)
 // ----------------------------------------------
 // loot function parsers
 
-// OK
 static int parse_set_count(LootFunction* loot_function, const cJSON* function_data)
 {
 	cJSON* count = cJSON_GetObjectItem(function_data, "count");
@@ -113,7 +111,6 @@ static int parse_set_count(LootFunction* loot_function, const cJSON* function_da
 	}
 }
 
-// OK
 static void parse_enchant_randomly(LootTableContext* ctx, LootFunction* loot_function, const cJSON* function_data, const char* item_name)
 {
 	const ItemType item_type = get_item_type(item_name);
@@ -158,7 +155,6 @@ static void parse_enchant_randomly(LootTableContext* ctx, LootFunction* loot_fun
 	}
 }
 
-// OK
 static void parse_enchant_with_levels(LootTableContext* ctx, LootFunction* loot_function, const cJSON* function_data, const char* item_name)
 {
 	const ItemType item_type = get_item_type(item_name);
@@ -194,7 +190,6 @@ static void parse_enchant_with_levels(LootTableContext* ctx, LootFunction* loot_
 
 // ----------------------------------------------
 
-// OK
 static void init_loot_table_items(const cJSON* loot_table, LootTableContext* ctx)
 {
 	// count how many item entries there are in the loot table
@@ -244,7 +239,6 @@ static void init_loot_table_items(const cJSON* loot_table, LootTableContext* ctx
 	}
 }
 
-// OK
 static void init_rolls(const cJSON* pool_data, LootPool* pool)
 {
 	cJSON* rolls = cJSON_GetObjectItem(pool_data, "rolls");
@@ -265,7 +259,6 @@ static void init_rolls(const cJSON* pool_data, LootPool* pool)
 	}
 }
 
-// OK
 static void map_entry_to_item(const cJSON* entry_data, LootTableContext* ctx, int* item_id)
 {
 	cJSON* name = cJSON_GetObjectItem(entry_data, "name");
@@ -283,7 +276,6 @@ static void map_entry_to_item(const cJSON* entry_data, LootTableContext* ctx, in
 	}
 }
 
-// OK
 static void init_entry(const cJSON* entry_data, LootPool* pool, const int entry_id, LootTableContext* ctx)
 {
 	int functions = 0;
@@ -313,7 +305,6 @@ static void init_entry(const cJSON* entry_data, LootPool* pool, const int entry_
 	// because we need to know the total number of functions to allocate the array
 }
 
-// OK
 static void init_entry_functions(const cJSON* entry_data, LootPool* pool, const int entry_id, LootTableContext* ctx)
 {
 	cJSON* functions_field = cJSON_GetObjectItem(entry_data, "functions");
@@ -354,7 +345,6 @@ static void init_entry_functions(const cJSON* entry_data, LootPool* pool, const 
 	}
 }
 
-// OK
 static void precompute_loot_pool(LootPool* pool, const cJSON* entries_field)
 {
 	int index = 0;
@@ -371,7 +361,6 @@ static void precompute_loot_pool(LootPool* pool, const cJSON* entries_field)
 	}
 }
 
-// OK
 static int init_loot_pool(const cJSON* pool_data, const int pool_id, LootTableContext* ctx)
 {
 	LootPool* pool = &(ctx->loot_pools[pool_id]);
@@ -417,7 +406,6 @@ static int init_loot_pool(const cJSON* pool_data, const int pool_id, LootTableCo
 	return 0;
 }
 
-// OK
 static void free_loot_function(LootFunction* lf)
 {
 	if (lf->varparams_int != NULL)
@@ -435,7 +423,6 @@ static void free_loot_function(LootFunction* lf)
 	lf->fun = NULL;
 }
 
-// OK
 static void free_loot_pool(LootPool* pool)
 {
 	free(pool->precomputed_loot);
@@ -455,7 +442,6 @@ static void free_loot_pool(LootPool* pool)
 
 // -------------------------------------------------------------------------------------
 
-// OK
 int init_loot_table(const char* filename, LootTableContext* context, const MCVersion version)
 {
 	context->version = version;
@@ -520,7 +506,6 @@ int init_loot_table(const char* filename, LootTableContext* context, const MCVer
 	return 0;
 }
 
-// OK
 void free_loot_table(LootTableContext* context)
 {
 	// free item name arrays

@@ -8,168 +8,6 @@
 
 #include "cjson/CJSON.h"
 
-/*
-static char* get_no_whitespace_string(const char* str)
-{
-	int len = (int)strlen(str);
-	char* no_whitespace = (char*)malloc(len + 1);
-
-	int j = 0;
-	for (int i = 0; i < len; i++)
-	{
-		if (!isspace(str[i]))
-		{
-			no_whitespace[j] = str[i];
-			j++;
-		}
-	}
-	no_whitespace[j] = '\0';
-	return no_whitespace;
-}
-
-static char* substr(const char* str, int start, int end)
-{
-	if (start < 0) return NULL;
-	char* ret_str = (char*)malloc((size_t)end - start + 2);
-	if (ret_str == NULL) return NULL;
-	strncpy(ret_str, str + start, (size_t)end - start + 1);
-	ret_str[end - start + 1] = '\0';
-	return ret_str;
-}
-
-static char* extract_unnamed_object(const char* jsonstr, int index) {
-	// find the index-th unnamed object in the json string,
-	// return it as a new string.
-
-	int list_depth = 0;
-	int obj_depth = 0;
-	int len = (int)strlen(jsonstr);
-	// DEBUG_MSG("extract_unnamed_object got string with len = %d\n", len);
-
-	int indexBegin = 0;
-	int indexEnd = 0;
-
-	for (int i = 0; i < len; i++) {
-		if (jsonstr[i] == '[') list_depth++;
-		else if (jsonstr[i] == ']') list_depth--;
-		if (jsonstr[i] == '{') obj_depth++;
-		else if (jsonstr[i] == '}') obj_depth--;
-
-		// if we are at the correct depth and we found the index-th object,
-		// extract it and return it as a new string.
-
-		if (jsonstr[i] == '{' && obj_depth == 1 && list_depth == 1) {
-			if (index == 0) {
-				indexBegin = i;
-			}
-			index--;
-		}
-		else if (jsonstr[i] == '}' && obj_depth == 0 && list_depth == 1) {
-			if (index == -1) {
-				indexEnd = i;
-				break;
-			}
-		}
-	}
-
-	// DEBUG_MSG("indexBegin: %d,  indexEnd: %d\n", indexBegin, indexEnd);
-
-	// extract the substring from indexBegin to indexEnd, or return null if the object was not found
-	if (indexBegin == 0 && indexEnd == 0)
-		return NULL;
-	char* extracted = substr(jsonstr, indexBegin, indexEnd);
-	return extracted;
-}
-
-static char* extract_named_object(const char* jsonstr, const char* key) {
-	// find the object with the given name in the json string at the current depth,
-	// return it as a new string.
-
-	static const char startChars[] = { '{', '['};
-	static const char endChars[] = { '}', ']' };
-
-	// search for the key in the string
-	char* keyPos = strstr(jsonstr, key);
-	if (keyPos == NULL) return NULL;
-
-	keyPos += strlen(key); // quote & colon are inside the key
-
-	// extract the character that follows the key
-	char objStart = *keyPos;
-	char incDepth = 0;
-	char decDepth = 0;
-
-	// setup extraction of bracket-enclosed objects
-	for (int i = 0; i < 2; i++) {
-		if (objStart == startChars[i]) {
-			incDepth = startChars[i];
-			decDepth = endChars[i];
-		}
-	}
-
-	int length = 0;
-	int depth = 1;
-
-	// find the number of characters in the object
-	while (depth > 0) {
-		length++;
-		const char c = keyPos[length];
-		if (c == incDepth) depth++;
-		if (c == decDepth) depth--;
-
-		// handle cases where it's just a key-value pair
-		if (incDepth == 0 && c == ',') {
-			length--;
-			break;
-		}
-		if (incDepth == 0 && (c == '}' || c == ']')) {
-			length--;
-			break;
-		}
-	}
-	//DEBUG_MSG("extracting substring of length: %d\n", length);
-
-	// extract the substring
-	char* extracted = substr(keyPos, 0, length);
-	return extracted;
-}
-
-static int count_unnamed(const char* jsonarr)
-{
-	int depth = 0;
-	int count = 0;
-	int len = (int)strlen(jsonarr);
-
-	for (int i = 0; i < len; i++) {
-		if (jsonarr[i] == '[' || jsonarr[i] == '{') depth++;
-		else if (jsonarr[i] == ']' || jsonarr[i] == '}') depth--;
-
-		if (jsonarr[i] == '{' && depth == 2) 
-			count++;
-	}
-
-	return count;
-}
-
-static char* remove_minecraft_prefix(const char* value)
-{
-	// remove quotes and "minecraft:" prefix
-	char* name = substr(value, 1 + 10, (int)strlen(value) - 2);
-	return name;
-}
-
-static int extract_int(const char* jsonstr, const char* key, const int or_else)
-{
-	char* value = extract_named_object(jsonstr, key);
-	if (value == NULL) 
-		return or_else;
-
-	int result = atoi(value);
-	free(value);
-	return result;
-}
-*/
-
 // OK
 static ItemType get_item_type(const char* item_name)
 {
@@ -357,40 +195,57 @@ static void parse_enchant_with_levels(LootTableContext* ctx, LootFunction* loot_
 // ----------------------------------------------
 
 
-static void init_loot_table_items(char* loot_table_string, LootTableContext* ctx)
+static void init_loot_table_items(const cJSON* loot_table, LootTableContext* ctx)
 {
-	char* cursor = loot_table_string;
+	// count how many item entries there are in the loot table
+	int item_count = 0;
 
-	// firstly, count items
-	ctx->item_count = 0;
-	while (1) {
-		cursor = strstr(cursor, "\"name\":");
-		if (cursor == NULL) break;
-		ctx->item_count++;
-		cursor++; // won't find the previous key now
+	const cJSON* pools = cJSON_GetObjectItem(loot_table, "pools");
+	cJSON* pool = NULL;
+
+	cJSON_ArrayForEach(pool, pools)
+	{
+		cJSON* entries = cJSON_GetObjectItem(pool, "entries");
+		cJSON* entry = NULL;
+
+		cJSON_ArrayForEach(entry, entries)
+		{
+			cJSON* name = cJSON_GetObjectItem(entry, "name");
+			if (name == NULL) continue;
+			item_count++;
+		}
 	}
 
-	//DEBUG_MSG("Found %d distinct items\n", ctx->item_count);
-
 	// allocate memory for item names
-	ctx->item_names = (char**)malloc(ctx->item_count * sizeof(char*));
-	
-	// fill the array
-	cursor = loot_table_string;
+	ctx->item_count = item_count;
+	ctx->item_names = (char**)malloc(item_count * sizeof(char*));
+	if (ctx->item_names == NULL) return; // FIXME add logging
 
-	for (int i = 0; i < ctx->item_count; i++) {
-		char* val = extract_named_object(cursor, "\"name\":");
-		char* name = remove_minecraft_prefix(val);
-		free(val);
-		ctx->item_names[i] = name;
-		//DEBUG_MSG("Item %d: %s\n", i, name);
+	// fill the item names array
+	int ix = 0;
+	cJSON_ArrayForEach(pool, pools)
+	{
+		cJSON* entries = cJSON_GetObjectItem(pool, "entries");
+		cJSON* entry = NULL;
 
-		cursor = strstr(cursor, "\"name\":") + 8;
+		cJSON_ArrayForEach(entry, entries)
+		{
+			cJSON* name = cJSON_GetObjectItem(entry, "name");
+			if (name == NULL) continue;
+			
+			// copy the name to the LootContext structure
+			const char* item_name = cJSON_GetStringValue(name);
+			ctx->item_names[ix] = (char*)malloc(strlen(item_name) + 1);
+			if (ctx->item_names[ix] == NULL || item_name == NULL) return; // FIXME add logging
+			strcpy(ctx->item_names[ix], item_name);
+			ix++;
+			if (ix >= item_count) break;
+		}
 	}
 }
 
 // OK
-static int init_rolls(const cJSON* pool_data, LootPool* pool)
+static void init_rolls(const cJSON* pool_data, LootPool* pool)
 {
 	cJSON* rolls = cJSON_GetObjectItem(pool_data, "rolls");
 
@@ -406,11 +261,9 @@ static int init_rolls(const cJSON* pool_data, LootPool* pool)
 		pool->min_rolls = cJSON_GetObjectItem(rolls, "min")->valueint;
 		pool->max_rolls = cJSON_GetObjectItem(rolls, "max")->valueint;
 	}
-
-	return 0;
 }
 
-static void map_entry_to_item(const char* entry_data, LootTableContext* ctx, int* item_id)
+static void map_entry_to_item(const cJSON* entry_data, LootTableContext* ctx, int* item_id)
 {
 	char* name_field = extract_named_object(entry_data, "\"name\":"); // 1
 	if (name_field == NULL) {
@@ -429,7 +282,7 @@ static void map_entry_to_item(const char* entry_data, LootTableContext* ctx, int
 	free(name_field); // 0
 }
 
-static void init_entry(const char* entry_data, LootPool* pool, const int entry_id, LootTableContext* ctx)
+static void init_entry(const cJSON* entry_data, LootPool* pool, const int entry_id, LootTableContext* ctx)
 {
 	int functions = 0;
 
@@ -459,7 +312,7 @@ static void init_entry(const char* entry_data, LootPool* pool, const int entry_i
 	// because we need to know the total number of functions to allocate the array
 }
 
-static void init_entry_functions(const char* entry_data, LootPool* pool, const int entry_id, LootTableContext* ctx)
+static void init_entry_functions(const cJSON* entry_data, LootPool* pool, const int entry_id, LootTableContext* ctx)
 {
 	char* functions_field = extract_named_object(entry_data, "\"functions\":"); // 1
 	if (functions_field == NULL)
@@ -502,7 +355,7 @@ static void init_entry_functions(const char* entry_data, LootPool* pool, const i
 	return;
 }
 
-static void precompute_loot_pool(LootPool* pool, const char* entries_field)
+static void precompute_loot_pool(LootPool* pool, const cJSON* entries_field)
 {
 	int index = 0;
 
@@ -519,37 +372,28 @@ static void precompute_loot_pool(LootPool* pool, const char* entries_field)
 	}
 }
 
-static int init_loot_pool(const char* pool_data, const int pool_id, LootTableContext* ctx)
+// OK
+static int init_loot_pool(const cJSON* pool_data, const int pool_id, LootTableContext* ctx)
 {
-	//DEBUG_MSG("Initializing loot pool %d\n", pool_id);
-
 	LootPool* pool = &(ctx->loot_pools[pool_id]);
 	pool->total_weight = 0;
+	init_rolls(pool_data, pool);
 
-	int ret = init_rolls(pool_data, pool);
-	if (ret != 0)
-		ERR("Loot pool does not declare a roll choice function");
+	// count entries
+	cJSON* entries = cJSON_GetObjectItem(pool_data, "entries");
+	pool->entry_count = cJSON_GetArraySize(entries);
 
-	// count entries inside loot table
-
-	char* entries_field = extract_named_object(pool_data, "\"entries\":"); // 1
-	if (entries_field == NULL)
-		ERR("Loot pool does not declare any entries");
-	pool->entry_count = count_unnamed(entries_field);
-
-	// create the entries
+	// allocate memory for entry data
 	pool->entry_to_item = (int*)malloc(pool->entry_count * sizeof(int));
 	pool->entry_functions_index = (int*)malloc(pool->entry_count * sizeof(int));
 	pool->entry_functions_count = (int*)malloc(pool->entry_count * sizeof(int));
 	if (pool->entry_to_item == NULL || pool->entry_functions_index == NULL || pool->entry_functions_count == NULL)
-		ERR("Could not allocate memory for entry fields");
+		return -1;
 
 	// first pass: count total loot functions and create simple entry mappings
 	for (int i = 0; i < pool->entry_count; i++) {
-		char* entry_data = extract_unnamed_object(entries_field, i); // 2
-		//DEBUG_MSG("POOL %d:  ENTRY %d\n", pool_id, i);
-		init_entry(entry_data, pool, i, ctx);
-		free(entry_data); // 1
+		cJSON* entry = cJSON_GetArrayItem(entries, i);
+		init_entry(entry, pool, i, ctx);
 	}
 
 	// second pass: initialize loot functions
@@ -557,26 +401,19 @@ static int init_loot_pool(const char* pool_data, const int pool_id, LootTableCon
 	int function_count = pool->entry_functions_index[last_ix] + pool->entry_functions_count[last_ix];
 	pool->loot_functions = (LootFunction*)malloc(function_count * sizeof(LootFunction));
 	if (pool->loot_functions == NULL)
-		ERR("Could not allocate memory for entry fields");
+		return -1; // FIXME add logging
 
 	for (int i = 0; i < pool->entry_count; i++) {
-		char* entry_data = extract_unnamed_object(entries_field, i); // 2
-		init_entry_functions(entry_data, pool, i, ctx);
-		free(entry_data); // 1
+		cJSON* entry = cJSON_GetArrayItem(entries, i);
+		init_entry_functions(entry, pool, i, ctx);
 	}
 
 	// final pass: precompute loot table
 	pool->precomputed_loot = (int*)malloc(pool->total_weight * sizeof(int));
-	if (pool->precomputed_loot == NULL) {
-		//DEBUG_MSG("Total weight: %d\n", pool->total_weight);
-		ERR("Could not allocate memory for precomputed loot table\n");
-	}
-	
-	//DEBUG_MSG("Precomputing pool %d ->\n", pool_id);
-	precompute_loot_pool(pool, entries_field);
-	//DEBUG_MSG("-> done, total weight = %d\n\n", pool->total_weight);
+	if (pool->precomputed_loot == NULL)
+		return -1; // FIXME add logging
 
-	free(entries_field); // 0
+	precompute_loot_pool(pool, entries);
 
 	return 0;
 }
@@ -626,7 +463,7 @@ int init_loot_table(const char* filename, LootTableContext* context, const MCVer
 	// open the file
 	FILE* fptr = fopen(filename, "r");
 	if (fptr == NULL)
-		ERR("Could not open file");
+		return -1;
 	fseek(fptr, 0, SEEK_END);
 	size_t file_size = ftell(fptr);	// get the size of the file
 	fseek(fptr, 0, SEEK_SET);		// go back to the beginning of the file
@@ -635,7 +472,7 @@ int init_loot_table(const char* filename, LootTableContext* context, const MCVer
 	char* file_content = (char*)malloc(file_size + 1); // 1
 	if (file_content == NULL) {
 		fclose(fptr);
-		ERR("Could not allocate memory for file content");
+		return -1;
 	}
 
 	// read the file content
@@ -643,15 +480,23 @@ int init_loot_table(const char* filename, LootTableContext* context, const MCVer
 	if (read != file_size) {
 		fclose(fptr);
 		free(file_content);
-		ERR("Error while reading file content");
+		return -1;
 	}
 
 	file_content[file_size] = '\0';
 	fclose(fptr);
 
+	cJSON* loot_table = cJSON_Parse(file_content);
+	if (loot_table == NULL) {
+		free(file_content); // 1
+		return -1;
+	}
+	free(file_content); // 1
+
 	// TODO
 
-	free(file_content); // 1
+	cJSON_Delete(loot_table);
+	return 0;
 }
 
 // OK

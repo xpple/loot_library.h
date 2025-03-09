@@ -177,4 +177,6 @@ enum Enchantment {
 	CURSE_OF_BINDING
 };
 
+void test_enchant_vec();
+
 #endif

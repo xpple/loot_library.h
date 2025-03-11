@@ -52,3 +52,10 @@ Mkfile.old
 dkms.conf
 
 example.out
+/.vs
+/LootLibrary.sln
+/LootLibrary.vcxproj
+/LootLibrary.vcxproj.filters
+/LootLibrary.vcxproj.user
+
+/LootLibrary

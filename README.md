@@ -33,3 +33,10 @@ int main(void) {
     return 0;
 }
 ```
+
+# TODO
+- set_effect loot function
+- chained loot tables
+- loot sequences
+- full support for 1.13+
+- multiple operation modes for LootTableContext

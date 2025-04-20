@@ -35,8 +35,12 @@ int main(void) {
 ```
 
 # TODO
+- load directly from FILE* instead of const char* to avoid relative filepath issues
 - set_effect loot function
 - chained loot tables
 - loot sequences
 - full support for 1.13+
 - multiple operation modes for LootTableContext
+- restructure project: move legacy code to a subfolder (src/legacy?)
+- update readme with v2 example of use
+- add more examples in src/examples

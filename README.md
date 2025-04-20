@@ -40,7 +40,7 @@ int main(void) {
 - chained loot tables
 - loot sequences
 - full support for 1.13+
-- multiple operation modes for LootTableContext
+- multiple operation modes for LootTableContext: as-is, aggregated items, predicate-match, full (indexed)
 - restructure project: move legacy code to a subfolder (src/legacy?)
 - update readme with v2 example of use
 - add more examples in src/examples

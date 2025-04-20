@@ -339,6 +339,9 @@ static void init_entry_functions(const cJSON* entry_data, LootPool* pool, const 
 			// inline parsing here, it's a very simple function
 			create_set_damage(loot_function);
 		}
+		else if (strcmp(function_name, "minecraft:set_effect") == 0 && strcmp(entry_item_name, "minecraft:suspicious_stew") == 0) {
+			create_set_effect
+		}
 		else {
 			create_no_op(loot_function);
 		}

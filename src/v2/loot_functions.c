@@ -21,6 +21,12 @@ static void set_count_constant_function(uint64_t* rand, ItemStack* is, const voi
 	is->count = params_int[0];
 }
 
+static void set_effect_function(uint64_t* rand, ItemStack* is, const void* params)
+{
+	nextSeed(rand); // effect type
+	nextSeed(rand); // effect duration
+}
+
 static void skip_n_calls_function(uint64_t* rand, ItemStack* is, const void* params)
 {
 	const int* params_int = (const int*)params;
@@ -251,6 +257,13 @@ void create_set_count(LootFunction* lf, const int min, const int max)
 	{
 		lf->fun = set_count_uniform_function;
 	}
+}
+
+void create_set_effect(LootFunction* lf)
+{
+	init_function(lf);
+	lf->params = lf->params_int;
+	lf->fun = set_effect_function;
 }
 
 void create_set_damage(LootFunction* lf)

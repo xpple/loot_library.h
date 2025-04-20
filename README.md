@@ -36,8 +36,8 @@ int main(void) {
 
 # TODO
 ## Update 1
-- load directly from FILE* instead of const char* to avoid relative filepath issues
-- set_effect loot function (
+done - load directly from FILE* instead of const char* to avoid relative filepath issues
+done - set_effect loot function (skips the effect call)
 - chained loot tables
 
 ## Update 2

@@ -61,6 +61,7 @@ inline int roll_count_uniform(uint64_t* rand, const int min, const int max)
 // Loot function initializers
 
 void create_set_count(LootFunction* lf, const int min, const int max);
+void create_set_effect(LootFunction* lf);
 void create_set_damage(LootFunction* lf);
 void create_skip_calls(LootFunction* lf, const int skip_count);
 void create_no_op(LootFunction* lf);

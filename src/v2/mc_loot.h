@@ -3,7 +3,8 @@
 
 #include "loot_table_context.h"
 
-int init_loot_table(const char* loot_table_json, LootTableContext* context, const MCVersion version);
+int init_loot_table(const char* loot_table_string, LootTableContext* context, const MCVersion version);
+int init_loot_table(FILE* file, LootTableContext* context, const MCVersion version);
 void free_loot_table(LootTableContext* context);
 
 #endif

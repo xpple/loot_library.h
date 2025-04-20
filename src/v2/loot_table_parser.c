@@ -442,42 +442,12 @@ static void free_loot_pool(LootPool* pool)
 
 // -------------------------------------------------------------------------------------
 
-int init_loot_table(const char* filename, LootTableContext* context, const MCVersion version)
+int init_loot_table(const char* loot_table_string, LootTableContext* context, const MCVersion version)
 {
-	context->version = version;
-
-	// open the file
-	FILE* fptr = fopen(filename, "r");
-	if (fptr == NULL)
-		return -1;
-	fseek(fptr, 0, SEEK_END);
-	size_t file_size = ftell(fptr);	// get the size of the file
-	fseek(fptr, 0, SEEK_SET);		// go back to the beginning of the file
-
-	// allocate memory for file contents
-	char* file_content = (char*)malloc(file_size + 1); // 1
-	if (file_content == NULL) {
-		fclose(fptr);
-		return -1;
-	}
-
-	// read the file content
-	int read = (int)fread(file_content, 1, file_size, fptr);
-	if (read != file_size) {
-		fclose(fptr);
-		free(file_content);
-		return -1;
-	}
-
-	file_content[file_size] = '\0';
-	fclose(fptr);
-
-	cJSON* loot_table = cJSON_Parse(file_content);
+	cJSON* loot_table = cJSON_Parse(loot_table_string);
 	if (loot_table == NULL) {
-		free(file_content); // 1
-		return -1;
+		return -1; // failed to parse string into JSON
 	}
-	free(file_content); // 1
 
 	// initialize item names
 	init_loot_table_items(loot_table, context);
@@ -504,6 +474,33 @@ int init_loot_table(const char* filename, LootTableContext* context, const MCVer
 
 	cJSON_Delete(loot_table);
 	return 0;
+}
+
+int init_loot_table(FILE* file, LootTableContext* context, const MCVersion version)
+{
+	context->version = version;
+
+	if (file == NULL)
+		return -1;
+	fseek(file, 0, SEEK_END);
+	size_t file_size = ftell(file);	// get the size of the file
+	fseek(file, 0, SEEK_SET);		// go back to the beginning of the file
+
+	// allocate memory for file contents
+	char* file_content = (char*)malloc(file_size + 1); // 1
+	if (file_content == NULL) {
+		return -1;
+	}
+
+	// read the file content
+	int read = (int)fread(file_content, 1, file_size, file);
+	if (read != file_size) {
+		free(file_content);
+		return -1;
+	}
+
+	file_content[file_size] = '\0';
+	return init_loot_table(file_content, context, version);
 }
 
 void free_loot_table(LootTableContext* context)

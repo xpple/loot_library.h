@@ -33,3 +33,22 @@ int main(void) {
     return 0;
 }
 ```
+
+# TODO
+## Update 1
+- load directly from FILE* instead of const char* to avoid relative filepath issues
+- set_effect loot function (
+- chained loot tables
+
+## Update 2
+- multiple operation modes for LootTableContext: as-is, aggregated matching items, aggregated item-type matching items, predicate-match, full (indexed)
+
+## Update 3
+- loot sequence support
+- restructure project: move legacy code to a subfolder (src/legacy?)
+- update readme with v2 example of use
+
+## Update 4
+- full 1.13+ support (incl. 1.14.2?)
+- mass testing using source code
+- add more examples in src/examples

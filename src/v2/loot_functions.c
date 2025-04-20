@@ -595,40 +595,40 @@ static int get_max_level(const Enchantment enchantment)
 static int get_enchantability(const char* item_name)
 {
 	// I'm truly sorry.
-	if (strcmp(item_name, "leather_helmet") == 0) return 15;
-	if (strcmp(item_name, "leather_chestplate") == 0) return 15;
-	if (strcmp(item_name, "leather_leggings") == 0) return 15;
-	if (strcmp(item_name, "leather_boots") == 0) return 15;
-	if (strcmp(item_name, "iron_helmet") == 0) return 9;
-	if (strcmp(item_name, "iron_chestplate") == 0) return 9;
-	if (strcmp(item_name, "iron_leggings") == 0) return 9;
-	if (strcmp(item_name, "iron_boots") == 0) return 9;	
-	if (strcmp(item_name, "golden_helmet") == 0) return 25;
-	if (strcmp(item_name, "golden_chestplate") == 0) return 25;
-	if (strcmp(item_name, "golden_leggings") == 0) return 25;
-	if (strcmp(item_name, "golden_boots") == 0) return 25;
-	if (strcmp(item_name, "diamond_helmet") == 0) return 10;
-	if (strcmp(item_name, "diamond_chestplate") == 0) return 10;
-	if (strcmp(item_name, "diamond_leggings") == 0) return 10;
-	if (strcmp(item_name, "diamond_boots") == 0) return 10;
-	if (strcmp(item_name, "fishing_rod") == 0) return 1;
-	if (strcmp(item_name, "book") == 0) return 1;
-	if (strcmp(item_name, "iron_pickaxe") == 0) return 14;
-	if (strcmp(item_name, "iron_axe") == 0) return 14;
-	if (strcmp(item_name, "iron_hoe") == 0) return 14;
-	if (strcmp(item_name, "iron_shovel") == 0) return 14;
-	if (strcmp(item_name, "iron_sword") == 0) return 14;
-	if (strcmp(item_name, "golden_pickaxe") == 0) return 22;
-	if (strcmp(item_name, "golden_axe") == 0) return 22;
-	if (strcmp(item_name, "golden_hoe") == 0) return 22;
-	if (strcmp(item_name, "golden_shovel") == 0) return 22;
-	if (strcmp(item_name, "golden_sword") == 0) return 22;
-	if (strcmp(item_name, "diamond_pickaxe") == 0) return 10;
-	if (strcmp(item_name, "diamond_axe") == 0) return 10;
-	if (strcmp(item_name, "diamond_hoe") == 0) return 10;
-	if (strcmp(item_name, "diamond_shovel") == 0) return 10;
-	if (strcmp(item_name, "diamond_sword") == 0) return 10;
-	if (strcmp(item_name, "bow") == 0) return 1;
+	if (strcmp(item_name, "minecraft:leather_helmet") == 0) return 15;
+	if (strcmp(item_name, "minecraft:leather_chestplate") == 0) return 15;
+	if (strcmp(item_name, "minecraft:leather_leggings") == 0) return 15;
+	if (strcmp(item_name, "minecraft:leather_boots") == 0) return 15;
+	if (strcmp(item_name, "minecraft:iron_helmet") == 0) return 9;
+	if (strcmp(item_name, "minecraft:iron_chestplate") == 0) return 9;
+	if (strcmp(item_name, "minecraft:iron_leggings") == 0) return 9;
+	if (strcmp(item_name, "minecraft:iron_boots") == 0) return 9;	
+	if (strcmp(item_name, "minecraft:golden_helmet") == 0) return 25;
+	if (strcmp(item_name, "minecraft:golden_chestplate") == 0) return 25;
+	if (strcmp(item_name, "minecraft:golden_leggings") == 0) return 25;
+	if (strcmp(item_name, "minecraft:golden_boots") == 0) return 25;
+	if (strcmp(item_name, "minecraft:diamond_helmet") == 0) return 10;
+	if (strcmp(item_name, "minecraft:diamond_chestplate") == 0) return 10;
+	if (strcmp(item_name, "minecraft:diamond_leggings") == 0) return 10;
+	if (strcmp(item_name, "minecraft:diamond_boots") == 0) return 10;
+	if (strcmp(item_name, "minecraft:fishing_rod") == 0) return 1;
+	if (strcmp(item_name, "minecraft:book") == 0) return 1;
+	if (strcmp(item_name, "minecraft:iron_pickaxe") == 0) return 14;
+	if (strcmp(item_name, "minecraft:iron_axe") == 0) return 14;
+	if (strcmp(item_name, "minecraft:iron_hoe") == 0) return 14;
+	if (strcmp(item_name, "minecraft:iron_shovel") == 0) return 14;
+	if (strcmp(item_name, "minecraft:iron_sword") == 0) return 14;
+	if (strcmp(item_name, "minecraft:golden_pickaxe") == 0) return 22;
+	if (strcmp(item_name, "minecraft:golden_axe") == 0) return 22;
+	if (strcmp(item_name, "minecraft:golden_hoe") == 0) return 22;
+	if (strcmp(item_name, "minecraft:golden_shovel") == 0) return 22;
+	if (strcmp(item_name, "minecraft:golden_sword") == 0) return 22;
+	if (strcmp(item_name, "minecraft:diamond_pickaxe") == 0) return 10;
+	if (strcmp(item_name, "minecraft:diamond_axe") == 0) return 10;
+	if (strcmp(item_name, "minecraft:diamond_hoe") == 0) return 10;
+	if (strcmp(item_name, "minecraft:diamond_shovel") == 0) return 10;
+	if (strcmp(item_name, "minecraft:diamond_sword") == 0) return 10;
+	if (strcmp(item_name, "minecraft:bow") == 0) return 1;
 	return 1;
 }
 
@@ -732,6 +732,22 @@ void create_enchant_randomly_one_enchant(LootFunction* lf, const Enchantment enc
 	lf->fun = set_enchantment_random_level_function;
 }
 
+void create_enchant_randomly_list(LootFunction* lf, const Enchantment* list, const int list_length)
+{
+	init_function(lf);
+	lf->varparams_int = (int*)malloc((2 * list_length + 1) * sizeof(int));
+	lf->params = lf->varparams_int;
+	lf->varparams_int[0] = list_length;
+
+	for (int i = 0; i < list_length; i++)
+	{
+		lf->varparams_int[1 + 2 * i] = list[i];
+		lf->varparams_int[1 + 2 * i + 1] = get_max_level(list[i]);
+	}
+
+	lf->fun = enchant_randomly_function;
+}
+
 void create_enchant_randomly(LootFunction* lf, const MCVersion version, const ItemType item, const int isTreasure)
 {
 	int enchantCount = get_applicable_enchantments(item, version, NULL, 1);
@@ -768,7 +784,7 @@ void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const
 
 	// basic data vector
 	lf->varparams_int_arr[0] = (int*)malloc(3 * sizeof(int));
-	lf->varparams_int_arr[0][0] = get_enchantability(item_name); // todo
+	lf->varparams_int_arr[0][0] = get_enchantability(item_name);
 	lf->varparams_int_arr[0][1] = min_level;
 	lf->varparams_int_arr[0][2] = max_level;
 

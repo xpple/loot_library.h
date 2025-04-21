@@ -480,8 +480,35 @@ static void free_loot_pool(LootPool* pool)
 
 // -------------------------------------------------------------------------------------
 
+static char* get_loot_table_from_file(FILE* file)
+{
+	if (file == NULL)
+		return NULL;
+	fseek(file, 0, SEEK_END);
+	size_t file_size = ftell(file);	// get the size of the file
+	fseek(file, 0, SEEK_SET);		// go back to the beginning of the file
+
+	// allocate memory for file contents
+	char* file_content = (char*)malloc(file_size + 1); // 1
+	if (file_content == NULL) {
+		return NULL;
+	}
+
+	// read the file content
+	int read = (int)fread(file_content, 1, file_size, file);
+	if (read != file_size) {
+		free(file_content);
+		return NULL;
+	}
+
+	file_content[file_size] = '\0';
+	return file_content;
+}
+
 int init_loot_table(const char* loot_table_string, LootTableContext* context, const MCVersion version)
 {
+	context->version = version;
+
 	cJSON* loot_table = cJSON_Parse(loot_table_string);
 	if (loot_table == NULL) {
 		return -1; // failed to parse string into JSON
@@ -529,30 +556,14 @@ int init_loot_table(const char* loot_table_string, LootTableContext* context, co
 
 int init_loot_table(FILE* loot_table_file, LootTableContext* context, const MCVersion version)
 {
-	context->version = version;
-
-	FILE* file = loot_table_file;
-	if (file == NULL)
-		return -1;
-	fseek(file, 0, SEEK_END);
-	size_t file_size = ftell(file);	// get the size of the file
-	fseek(file, 0, SEEK_SET);		// go back to the beginning of the file
-
-	// allocate memory for file contents
-	char* file_content = (char*)malloc(file_size + 1); // 1
+	char* file_content = get_loot_table_from_file(loot_table_file);
 	if (file_content == NULL) {
+		LOG_ERROR("Failed to read loot table file.");
 		return -1;
 	}
-
-	// read the file content
-	int read = (int)fread(file_content, 1, file_size, file);
-	if (read != file_size) {
-		free(file_content);
-		return -1;
-	}
-
-	file_content[file_size] = '\0';
-	return init_loot_table(file_content, context, version);
+	int ret = init_loot_table(file_content, context, version);
+	free(file_content);
+	return ret;
 }
 
 // -------------------------------------------------------------------------------------
@@ -621,7 +632,10 @@ static int merge_item_lists(LootTableContext* ctx, LootTableContext* sub_ctx)
 static int merge_loot_pools(LootTableContext* ctx, LootTableContext* sub_ctx)
 {
 	// allocate extra memory for the new loot pools
-	int total_pools = ctx->pool_count + sub_ctx->pool_count;
+	int total_pools = ctx->pool_count;
+	for (int i = 0; i < ctx->subtable_count; i++)
+		total_pools += ctx->subtable_pool_count[i];
+
 	ctx->loot_pools = (LootPool*)realloc(ctx->loot_pools, total_pools * sizeof(LootPool));
 	if (ctx->loot_pools == NULL)
 		return -1; // failed to allocate memory
@@ -638,12 +652,33 @@ static int merge_loot_pools(LootTableContext* ctx, LootTableContext* sub_ctx)
 		{
 			int item_id = new_pool->entry_to_item[j];
 			const char* item_name = item_id == -1 ? NULL : sub_ctx->item_names[item_id];
-			if (item_id != -1)
-				new_pool->entry_to_item[j] += ctx->item_count;
+			if (item_name == NULL)
+				continue; // empty entry, ignore
+
+			// search for the item name in the original context
+			int found = 0;
+			for (int k = 0; k < ctx->item_count; k++)
+			{
+				if (strcmp(ctx->item_names[k], item_name) == 0)
+				{
+					new_pool->entry_to_item[j] = k;
+					found = 1;
+					break;
+				}
+			}
+			if (!found)
+			{
+				// item should always be found, this is an error.
+				LOG_ERROR("Subtable item failed to be mapped in the parent context:");
+				fprintf(stderr, "Item: %s (id = %d)\n", item_name, item_id);
+				return -1;
+			}
 		}
 	}
 
-	ctx->pool_count = total_pools;
+	// free the subtable loot pool array - its contents were copied to the parent context
+	free(sub_ctx->loot_pools);
+
 	return 0;
 }
 
@@ -658,7 +693,7 @@ int resolve_subtable(LootTableContext* context, const char* subtable_name, const
 	LootTableContext subtable_context;
 	if (init_loot_table(subtable_string, &subtable_context, context->version) != 0)
 	{
-		LOG_ERROR("Could not parse subtable");
+		LOG_ERROR("Could not parse subtable.");
 		return -1;
 	}
 
@@ -715,10 +750,25 @@ int resolve_subtable(LootTableContext* context, const char* subtable_name, const
 
 	// clean up the subtable context memory.
 	// - item names were copied during merge, so free them
-	// - loot pools were reused, so don't free them
-	// 
-	
+	// - loot pools were freed properly in the merge function
+	// - subtable fields were not allocated, so ignore them
+	for (int i = 0; i < subtable_context.item_count; i++)
+		free(subtable_context.item_names[i]);
+	free(subtable_context.item_names);
+
 	return 0;
+}
+
+int resolve_subtable(LootTableContext* context, const char* subtable_name, FILE* subtable_file)
+{
+	char* file_content = get_loot_table_from_file(subtable_file);
+	if (file_content == NULL) {
+		LOG_ERROR("Failed to read loot table file.");
+		return -1;
+	}
+	int ret = resolve_subtable(context, subtable_name, file_content);
+	free(file_content);
+	return ret;
 }
 
 void free_loot_table(LootTableContext* context)
@@ -744,6 +794,8 @@ void free_loot_table(LootTableContext* context)
 	free(context->loot_pools);
 
 	// free subtable pool offset and count arrays
-	free(context->subtable_pool_offset);
-	free(context->subtable_pool_count);
+	if (context->subtable_pool_offset != NULL)
+		free(context->subtable_pool_offset);
+	if (context->subtable_pool_count != NULL)
+		free(context->subtable_pool_count);
 }

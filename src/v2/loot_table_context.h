@@ -35,16 +35,18 @@ typedef struct LootTableContext LootTableContext;
 struct LootTableContext {
 	// "constants" defining the loot table
 	MCVersion version;
-	int item_count;			// how many different items can this loot table generate
-	char** item_names;		// names of the different items
+	int item_count;    // how many different items can this loot table generate
+	char** item_names; // names of the different items
 
 	int pool_count;
 	LootPool* loot_pools;
 
-        // TODO sub-table data
-        //int subtable_count; // how many subtables the loot table has
-        //int* subtable_pool_offset; // subtable index to index of first loot pool
-        //int* subtable_pool_count; // subtable index to how many pools it has
+	int unresolved_subtable_count;      // how many subtables are missing
+	char* unresolved_subtable_names[8]; // names of the unresolved subtables (future-safe max size)
+
+	int subtable_count;        // how many subtables the loot table has
+	int* subtable_pool_offset; // subtable index to index of first loot pool
+	int* subtable_pool_count;  // subtable index to how many pools it has
 
 	// holding data related with generating the loot table within the context is a debatable idea
 	uint64_t prng_state;

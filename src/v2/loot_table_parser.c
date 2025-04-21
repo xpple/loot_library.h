@@ -1,5 +1,6 @@
 #include "mc_loot.h"
 #include "loot_functions.h"
+#include "logging.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -519,10 +520,11 @@ int init_loot_table(const char* loot_table_string, LootTableContext* context, co
 	return 0;
 }
 
-int init_loot_table(FILE* file, LootTableContext* context, const MCVersion version)
+int init_loot_table(FILE* loot_table_file, LootTableContext* context, const MCVersion version)
 {
 	context->version = version;
 
+	FILE* file = loot_table_file;
 	if (file == NULL)
 		return -1;
 	fseek(file, 0, SEEK_END);
@@ -546,6 +548,121 @@ int init_loot_table(FILE* file, LootTableContext* context, const MCVersion versi
 	return init_loot_table(file_content, context, version);
 }
 
+// -------------------------------------------------------------------------------------
+
+static int merge_item_lists(LootTableContext* ctx, LootTableContext* sub_ctx)
+{
+	int total_unique_items = ctx->item_count;
+	for (int i = 0; i < sub_ctx->item_count; i++)
+	{
+		for (int j = 0; j < ctx->item_count; j++)
+		{
+			if (strcmp(ctx->item_names[j], sub_ctx->item_names[i]) == 0)
+				break;
+			if (j == ctx->item_count - 1)
+				total_unique_items++; // item not found in original context
+		}
+	}
+
+	// allocate memory for the new item names
+	char** new_item_names = (char**)malloc(total_unique_items * sizeof(char*));
+	if (new_item_names == NULL)
+		return -1; // failed to allocate memory
+
+	// copy the original item names without changes
+	for (int i = 0; i < ctx->item_count; i++)
+	{
+		new_item_names[i] = (char*)malloc(strlen(ctx->item_names[i]) + 1);
+		if (new_item_names[i] == NULL)
+			return -1; // failed to allocate memory
+		strcpy(new_item_names[i], ctx->item_names[i]);
+	}
+
+	// copy subtable item names not present in the original context
+	int new_item_id = ctx->item_count;
+	for (int i = 0; i < sub_ctx->item_count; i++)
+	{
+		int found = 0;
+		for (int j = 0; j < ctx->item_count; j++)
+		{
+			if (strcmp(ctx->item_names[j], sub_ctx->item_names[i]) == 0)
+			{
+				found = 1;
+				break;
+			}
+		}
+		if (!found)
+		{
+			new_item_names[new_item_id] = (char*)malloc(strlen(sub_ctx->item_names[i]) + 1);
+			if (new_item_names[new_item_id] == NULL)
+				return -1; // failed to allocate memory
+			strcpy(new_item_names[new_item_id], sub_ctx->item_names[i]);
+			new_item_id++;
+		}
+	}
+
+	// replace the old item names in the original context
+	for (int i = 0; i < ctx->item_count; i++)
+		free(ctx->item_names[i]);
+	free(ctx->item_names);
+	ctx->item_names = new_item_names;
+	ctx->item_count = total_unique_items;
+
+	return 0;
+}
+
+int resolve_subtable(LootTableContext* context, const char* subtable_name, const char* subtable_string)
+{
+	if (context->unresolved_subtable_count == 0)
+	{
+		LOG_ERROR("The loot table has no unresolved subtables");
+		return -1; // no unresolved subtables
+	}
+
+	LootTableContext subtable_context;
+	if (init_loot_table(subtable_string, &subtable_context, context->version) != 0)
+	{
+		LOG_ERROR("Could not parse subtable");
+		return -1; // failed to parse subtable
+	}
+		
+	// check if the context's unresolved subtable name list has the subtable's name
+	int subtable_index = -1;
+	for (int i = 0; i < context->unresolved_subtable_count; i++)
+	{
+		if (strcmp(context->unresolved_subtable_names[i], subtable_name) == 0)
+		{
+			subtable_index = i;
+			break;
+		}
+	}
+	if (subtable_index == -1)
+	{
+		free_loot_table(&subtable_context);
+		LOG_ERROR("Subtable name not found");
+		return -1;
+	}
+	
+	// merge item name lists
+	if (merge_item_lists(context, &subtable_context) != 0)
+	{
+		free_loot_table(&subtable_context);
+		LOG_ERROR("Failed to merge item lists");
+		return -1;
+	}
+
+	// merge loot pools (most complex step)
+	if (merge_loot_pools(context, &subtable_context) != 0)
+	{
+		free_loot_table(&subtable_context);
+		LOG_ERROR("Failed to merge loot pools");
+		return -1;
+	}
+
+	free_loot_table(&subtable_context);
+	return 0;
+}
+
 void free_loot_table(LootTableContext* context)
 {
 	// free item name arrays
@@ -558,8 +675,10 @@ void free_loot_table(LootTableContext* context)
 		free(context->unresolved_subtable_names[i]);
 
 	// count total loot pools (incl. subtables)
-	int last_subtable = context->subtable_count - 1;
-	int total_pools = context->subtable_count == 0 ? context->pool_count : context->subtable_pool_offset[last_subtable] + context->subtable_pool_count[last_subtable];
+	int total_pools = context->pool_count;
+	for (int i = 0; i < context->subtable_count; i++)
+		total_pools += context->subtable_pool_count[i];
+
 	// free loot pools
 	for (int i = 0; i < total_pools; i++)
 		free_loot_pool(&(context->loot_pools[i]));

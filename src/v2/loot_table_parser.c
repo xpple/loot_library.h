@@ -276,33 +276,67 @@ static void map_entry_to_item(const cJSON* entry_data, LootTableContext* ctx, in
 	}
 }
 
+static int get_subtable_entry_id(int index)
+{
+	return -index - 2;
+	// index 0 maps to -2, index 1 to -3, etc.
+	// this is done because all positive IDs are reserved for item entries
+	// and the id -1 is reserved for empty entries.
+}
+
 static void init_entry(const cJSON* entry_data, LootPool* pool, const int entry_id, LootTableContext* ctx)
 {
-	int functions = 0;
-
-	cJSON* functions_field = cJSON_GetObjectItem(entry_data, "functions");
-	if (functions_field != NULL) {
-		functions = cJSON_GetArraySize(functions_field);
-	}
-
 	cJSON* weight_element = cJSON_GetObjectItem(entry_data, "weight");
 	pool->total_weight += weight_element == NULL ? 1 : weight_element->valueint;
 
-	// initialize loot function fields
+	cJSON* type_field = cJSON_GetObjectItem(entry_data, "type");
+	if (strcmp(type_field->valuestring, "minecraft:loot_table") == 0)
+	{
+		// search the array of unresolved loot tables for this entry
+		int ltid = 0;
+		for (int i = 0; i < ctx->unresolved_subtable_count; i++) {
+			if (strcmp(ctx->unresolved_subtable_names[i], entry_data->valuestring) == 0) {
+				ltid = get_subtable_entry_id(i);
+				break;
+			}
+		}
+		if (ltid == 0) {
+			// add the loot table to the unresolved list
+			int aid = ctx->unresolved_subtable_count;
+			ctx->unresolved_subtable_names[aid] = (char*)malloc(strlen(entry_data->valuestring) + 1);
+			strcpy(ctx->unresolved_subtable_names[aid], entry_data->valuestring);
+			ltid = get_subtable_entry_id(aid);
 
-	pool->entry_functions_count[entry_id] = functions;
-	int new_index = 0;
-	if (entry_id > 0)
-		new_index = pool->entry_functions_index[entry_id - 1] + pool->entry_functions_count[entry_id - 1];
-	pool->entry_functions_index[entry_id] = new_index;
+			ctx->unresolved_subtable_count++;
+		}
 
-	// initialize entry to item mapping field
+		// initialize entry to item (or loot table in this case) mapping field
+		pool->entry_to_item[entry_id] = ltid;
+	}
+	else // minecraft:item
+	{
+		int functions = 0;
+		cJSON* functions_field = cJSON_GetObjectItem(entry_data, "functions");
+		if (functions_field != NULL) {
+			functions = cJSON_GetArraySize(functions_field);
+		}
 
-	pool->entry_to_item[entry_id] = -1; // assume it's an empty entry for now
-	map_entry_to_item(entry_data, ctx, &(pool->entry_to_item[entry_id]));
+		// initialize loot function fields
 
-	// loot function initialization will be done after all entries are processed
-	// because we need to know the total number of functions to allocate the array
+		pool->entry_functions_count[entry_id] = functions;
+		int new_index = 0;
+		if (entry_id > 0)
+			new_index = pool->entry_functions_index[entry_id - 1] + pool->entry_functions_count[entry_id - 1];
+		pool->entry_functions_index[entry_id] = new_index;
+
+		// initialize entry to item mapping field
+
+		pool->entry_to_item[entry_id] = -1; // assume it's an empty entry for now
+		map_entry_to_item(entry_data, ctx, &(pool->entry_to_item[entry_id]));
+
+		// loot function initialization will be done after all entries are processed
+		// because we need to know the total number of functions to allocate the array
+	}
 }
 
 static void init_entry_functions(const cJSON* entry_data, LootPool* pool, const int entry_id, LootTableContext* ctx)
@@ -455,6 +489,12 @@ int init_loot_table(const char* loot_table_string, LootTableContext* context, co
 	// initialize item names
 	init_loot_table_items(loot_table, context);
 
+	// initialize subtables
+	context->unresolved_subtable_count = 0;
+	context->subtable_count = 0;
+	context->subtable_pool_offset = NULL;
+	context->subtable_pool_count = NULL;
+
 	// count loot pools
 	const cJSON* pools = cJSON_GetObjectItem(loot_table, "pools");
 	context->pool_count = cJSON_GetArraySize(pools);
@@ -513,8 +553,19 @@ void free_loot_table(LootTableContext* context)
 		free(context->item_names[i]);
 	free(context->item_names);
 
+	// free unresolved subtable names
+	for (int i = 0; i < context->unresolved_subtable_count; i++)
+		free(context->unresolved_subtable_names[i]);
+
+	// count total loot pools (incl. subtables)
+	int last_subtable = context->subtable_count - 1;
+	int total_pools = context->subtable_count == 0 ? context->pool_count : context->subtable_pool_offset[last_subtable] + context->subtable_pool_count[last_subtable];
 	// free loot pools
-	for (int i = 0; i < context->pool_count; i++)
+	for (int i = 0; i < total_pools; i++)
 		free_loot_pool(&(context->loot_pools[i]));
 	free(context->loot_pools);
+
+	// free subtable pool offset and count arrays
+	free(context->subtable_pool_offset);
+	free(context->subtable_pool_count);
 }

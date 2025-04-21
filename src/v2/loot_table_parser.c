@@ -380,11 +380,13 @@ static void init_entry_functions(const cJSON* entry_data, LootPool* pool, const 
 			parse_enchant_randomly(ctx, loot_function, function_data, entry_item_name);
 		}
 		else if (strcmp(function_name, "minecraft:set_damage") == 0) {
-			// inline parsing here, it's a very simple function
 			create_set_damage(loot_function);
 		}
 		else if (strcmp(function_name, "minecraft:set_stew_effect") == 0) {
 			create_set_effect(loot_function);
+		}
+		else if (strcmp(function_name, "minecraft:set_ominous_bottle_amplifier") == 0) {
+			create_skip_calls(loot_function, 1);
 		}
 		else {
 			create_no_op(loot_function);

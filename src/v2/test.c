@@ -83,5 +83,6 @@ int test_ominous_vault() {
 
 int main()
 {
+	//test_shipwreck();
 	test_ominous_vault();
 }

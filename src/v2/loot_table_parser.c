@@ -293,10 +293,12 @@ static void init_entry(const cJSON* entry_data, LootPool* pool, const int entry_
 	cJSON* type_field = cJSON_GetObjectItem(entry_data, "type");
 	if (strcmp(type_field->valuestring, "minecraft:loot_table") == 0)
 	{
+		cJSON* value_field = cJSON_GetObjectItem(entry_data, "value");
+
 		// search the array of unresolved loot tables for this entry
 		int ltid = 0;
 		for (int i = 0; i < ctx->unresolved_subtable_count; i++) {
-			if (strcmp(ctx->unresolved_subtable_names[i], entry_data->valuestring) == 0) {
+			if (strcmp(ctx->unresolved_subtable_names[i], value_field->valuestring) == 0) {
 				ltid = get_subtable_entry_id(i);
 				break;
 			}
@@ -304,8 +306,8 @@ static void init_entry(const cJSON* entry_data, LootPool* pool, const int entry_
 		if (ltid == 0) {
 			// add the loot table to the unresolved list
 			int aid = ctx->unresolved_subtable_count;
-			ctx->unresolved_subtable_names[aid] = (char*)malloc(strlen(entry_data->valuestring) + 1);
-			strcpy(ctx->unresolved_subtable_names[aid], entry_data->valuestring);
+			ctx->unresolved_subtable_names[aid] = (char*)malloc(strlen(value_field->valuestring) + 1);
+			strcpy(ctx->unresolved_subtable_names[aid], value_field->valuestring);
 			ltid = get_subtable_entry_id(aid);
 
 			ctx->unresolved_subtable_count++;
@@ -313,6 +315,13 @@ static void init_entry(const cJSON* entry_data, LootPool* pool, const int entry_
 
 		// initialize entry to item (or loot table in this case) mapping field
 		pool->entry_to_item[entry_id] = ltid;
+
+		// initialize loot function fields
+		pool->entry_functions_count[entry_id] = 0;
+		int new_index = 0;
+		if (entry_id > 0)
+			new_index = pool->entry_functions_index[entry_id - 1] + pool->entry_functions_count[entry_id - 1];
+		pool->entry_functions_index[entry_id] = new_index;
 	}
 	else // minecraft:item
 	{
@@ -484,8 +493,11 @@ static char* get_loot_table_from_file(FILE* file)
 {
 	if (file == NULL)
 		return NULL;
-	fseek(file, 0, SEEK_END);
-	size_t file_size = ftell(file);	// get the size of the file
+
+	int file_size = 0;
+	for (char c = getc(file); c != EOF; c = getc(file))
+		file_size++;
+
 	fseek(file, 0, SEEK_SET);		// go back to the beginning of the file
 
 	// allocate memory for file contents
@@ -495,12 +507,7 @@ static char* get_loot_table_from_file(FILE* file)
 	}
 
 	// read the file content
-	int read = (int)fread(file_content, 1, file_size, file);
-	if (read != file_size) {
-		free(file_content);
-		return NULL;
-	}
-
+	fread(file_content, 1, file_size, file);
 	file_content[file_size] = '\0';
 	return file_content;
 }
@@ -554,7 +561,7 @@ int init_loot_table(const char* loot_table_string, LootTableContext* context, co
 	return 0;
 }
 
-int init_loot_table(FILE* loot_table_file, LootTableContext* context, const MCVersion version)
+int init_loot_table_file(FILE* loot_table_file, LootTableContext* context, const MCVersion version)
 {
 	char* file_content = get_loot_table_from_file(loot_table_file);
 	if (file_content == NULL) {
@@ -573,13 +580,17 @@ static int merge_item_lists(LootTableContext* ctx, LootTableContext* sub_ctx)
 	int total_unique_items = ctx->item_count;
 	for (int i = 0; i < sub_ctx->item_count; i++)
 	{
+		int found = 0;
 		for (int j = 0; j < ctx->item_count; j++)
 		{
 			if (strcmp(ctx->item_names[j], sub_ctx->item_names[i]) == 0)
+			{
+				found = 1;
 				break;
-			if (j == ctx->item_count - 1)
-				total_unique_items++; // item not found in original context
+			}
 		}
+		if (!found)
+			total_unique_items++;
 	}
 
 	// allocate memory for the new item names
@@ -635,6 +646,7 @@ static int merge_loot_pools(LootTableContext* ctx, LootTableContext* sub_ctx)
 	int total_pools = ctx->pool_count;
 	for (int i = 0; i < ctx->subtable_count; i++)
 		total_pools += ctx->subtable_pool_count[i];
+	total_pools += sub_ctx->pool_count;
 
 	ctx->loot_pools = (LootPool*)realloc(ctx->loot_pools, total_pools * sizeof(LootPool));
 	if (ctx->loot_pools == NULL)
@@ -644,7 +656,8 @@ static int merge_loot_pools(LootTableContext* ctx, LootTableContext* sub_ctx)
 	for (int i = 0; i < sub_ctx->pool_count; i++)
 	{
 		LootPool* old_pool = &(sub_ctx->loot_pools[i]);
-		LootPool* new_pool = &(ctx->loot_pools[ctx->pool_count + i]);
+		const int new_index = total_pools - sub_ctx->pool_count + i;
+		LootPool* new_pool = &(ctx->loot_pools[new_index]);
 		memcpy(new_pool, old_pool, sizeof(LootPool));
 
 		// update the item IDs in the loot functions
@@ -759,7 +772,7 @@ int resolve_subtable(LootTableContext* context, const char* subtable_name, const
 	return 0;
 }
 
-int resolve_subtable(LootTableContext* context, const char* subtable_name, FILE* subtable_file)
+int resolve_subtable_file(LootTableContext* context, const char* subtable_name, FILE* subtable_file)
 {
 	char* file_content = get_loot_table_from_file(subtable_file);
 	if (file_content == NULL) {

@@ -5,10 +5,10 @@
 #include <stdio.h>
 
 int init_loot_table(const char* loot_table_string, LootTableContext* context, const MCVersion version);
-int init_loot_table(FILE* file, LootTableContext* context, const MCVersion version);
+int init_loot_table_file(FILE* file, LootTableContext* context, const MCVersion version);
 
 int resolve_subtable(LootTableContext* context, const char* subtable_name, const char* subtable_string);
-int resolve_subtable(LootTableContext* context, const char* subtable_name, FILE* subtable_file);
+int resolve_subtable_file(LootTableContext* context, const char* subtable_name, FILE* subtable_file);
 
 void free_loot_table(LootTableContext* context);
 

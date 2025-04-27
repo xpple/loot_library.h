@@ -9,6 +9,15 @@
 
 // ---------------------------------------------------------
 
+typedef enum GenerationMode GenerationMode;
+enum GenerationMode {
+	GENERATE_NATURAL = 0,
+	GENERATE_INDEXED = 1,
+	GENERATE_AGGREGATED = 2,
+	SKIP_ENCHANTMENTS = 4,
+	STOP_AT_PREDICATE_MATCH = 8
+};
+
 typedef struct LootPool LootPool;
 struct LootPool {
 	// roll count choice function
@@ -49,9 +58,20 @@ struct LootTableContext {
 	int* subtable_pool_count;  // subtable index to how many pools it has
 
 	// holding data related with generating the loot table within the context is a debatable idea
+	GenerationMode generation_mode;
 	uint64_t prng_state;
 	int generated_item_count;
-	ItemStack generated_items[27]; 
+	ItemStack generated_items[27];
+	// TODO: 
+	// use LootTableOutput* loot_output;
+	// instead of generated_items
+};
+
+typedef struct LootTableOutput LootTableOutput;
+struct LootTableOutput {
+	ItemStack natural_loot[27];
+	ItemStack indexed_loot[27];
+	int aggregated_loot[64];
 };
 
 

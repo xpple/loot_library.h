@@ -81,8 +81,32 @@ int test_ominous_vault() {
 	return 0;
 }
 
+int test_desert_temple()
+{
+	LootTableContext ctx;
+
+	FILE* file = fopen("src/examples/desert_pyramid.json", "r");
+	int ret = init_loot_table_file(file, &ctx, (MCVersion)v1_21);
+	fclose(file);
+	if (ret != 0) {
+		fprintf(stderr, "Error initializing loot table\n");
+		return ret;
+	}
+
+	// /setblock 3100 51 -2774 minecraft:chest[facing=west,type=single,waterlogged=false]{LootTable:"minecraft:chests/desert_pyramid",LootTableSeed:-6618568904386583729L,components:{}}
+	// /setblock 3098 51 -2772 minecraft:chest[facing=north,type=single,waterlogged=false]{LootTable:"minecraft:chests/desert_pyramid",LootTableSeed:-4350686274204906785L,components:{}}
+	// /setblock 3096 51 -2774 minecraft:chest[facing=east,type=single,waterlogged=false]{LootTable:"minecraft:chests/desert_pyramid",LootTableSeed:-1674741226462785893L,components:{}}
+	int64_t lootSeed = -1674741226462785893LL;
+	set_loot_seed(&ctx, lootSeed);
+	generate_loot(&ctx);
+	print_loot(&ctx);
+	
+	free_loot_table(&ctx);
+}
+
 int main()
 {
+	test_desert_temple();
 	//test_shipwreck();
 	//test_ominous_vault();
 }

@@ -58,11 +58,12 @@ struct LootTableContext {
 	int* subtable_pool_count;  // subtable index to how many pools it has
 
 	// holding data related with generating the loot table within the context is a debatable idea
-	GenerationMode generation_mode;
 	uint64_t prng_state;
 	int generated_item_count;
 	ItemStack generated_items[27];
+
 	// TODO: 
+	// GenerationMode generation_mode;
 	// use LootTableOutput* loot_output;
 	// instead of generated_items
 };

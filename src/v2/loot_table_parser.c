@@ -22,12 +22,12 @@ static ItemType get_item_type(const char* item_name)
 	if (strstr(item_name, "_leggings") != NULL) return LEGGINGS;
 	if (strstr(item_name, "_boots") != NULL) return BOOTS;
 
-	if (strcmp(item_name, "fishing_rod") == 0) return FISHING_ROD;
-	if (strcmp(item_name, "crossbow") == 0) return CROSSBOW;
-	if (strcmp(item_name, "trident") == 0) return TRIDENT;
-	if (strcmp(item_name, "bow") == 0) return BOW;
-	if (strcmp(item_name, "book") == 0) return BOOK;
-	if (strcmp(item_name, "mace") == 0) return MACE;
+	if (strcmp(item_name, "minecraft:fishing_rod") == 0) return FISHING_ROD;
+	if (strcmp(item_name, "minecraft:crossbow") == 0) return CROSSBOW;
+	if (strcmp(item_name, "minecraft:trident") == 0) return TRIDENT;
+	if (strcmp(item_name, "minecraft:bow") == 0) return BOW;
+	if (strcmp(item_name, "minecraft:book") == 0) return BOOK;
+	if (strcmp(item_name, "minecraft:mace") == 0) return MACE;
 
 	return NO_ITEM;
 }

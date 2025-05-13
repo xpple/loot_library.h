@@ -96,10 +96,14 @@ int test_desert_temple()
 	// /setblock 3100 51 -2774 minecraft:chest[facing=west,type=single,waterlogged=false]{LootTable:"minecraft:chests/desert_pyramid",LootTableSeed:-6618568904386583729L,components:{}}
 	// /setblock 3098 51 -2772 minecraft:chest[facing=north,type=single,waterlogged=false]{LootTable:"minecraft:chests/desert_pyramid",LootTableSeed:-4350686274204906785L,components:{}}
 	// /setblock 3096 51 -2774 minecraft:chest[facing=east,type=single,waterlogged=false]{LootTable:"minecraft:chests/desert_pyramid",LootTableSeed:-1674741226462785893L,components:{}}
-	int64_t lootSeed = -1674741226462785893LL;
-	set_loot_seed(&ctx, lootSeed);
-	generate_loot(&ctx);
-	print_loot(&ctx);
+	for (int64_t lootSeed = 1LL; lootSeed <= 10LL; lootSeed++)
+	{
+		set_loot_seed(&ctx, lootSeed);
+		generate_loot(&ctx);
+		printf("[%lld]\n", lootSeed);
+		print_loot(&ctx);
+	}
+	
 	
 	free_loot_table(&ctx);
 }

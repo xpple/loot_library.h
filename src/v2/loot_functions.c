@@ -73,8 +73,11 @@ static void enchant_randomly_function(uint64_t* rand, ItemStack* is, const void*
 	int enchantmentID = nextInt(rand, numEnchants);
 	is->enchantments[0].enchantment = varparams_int[2 * enchantmentID + 1];
 
-	int enchantmentLevel = nextInt(rand, varparams_int[2 * enchantmentID + 2]) + 1;
-	is->enchantments[0].level = enchantmentLevel;
+	int maxLevel = varparams_int[2 * enchantmentID + 2];
+	if (maxLevel > 1)
+		is->enchantments[0].level = nextInt(rand, maxLevel) + 1;
+	else
+		is->enchantments[0].level = 1;
 }
 
 // enchant with levels helpers

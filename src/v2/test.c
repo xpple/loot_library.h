@@ -96,7 +96,7 @@ int test_desert_temple()
 	// /setblock 3100 51 -2774 minecraft:chest[facing=west,type=single,waterlogged=false]{LootTable:"minecraft:chests/desert_pyramid",LootTableSeed:-6618568904386583729L,components:{}}
 	// /setblock 3098 51 -2772 minecraft:chest[facing=north,type=single,waterlogged=false]{LootTable:"minecraft:chests/desert_pyramid",LootTableSeed:-4350686274204906785L,components:{}}
 	// /setblock 3096 51 -2774 minecraft:chest[facing=east,type=single,waterlogged=false]{LootTable:"minecraft:chests/desert_pyramid",LootTableSeed:-1674741226462785893L,components:{}}
-	for (int64_t lootSeed = 1LL; lootSeed <= 10LL; lootSeed++)
+	for (int64_t lootSeed = 1LL; lootSeed <= 20LL; lootSeed++)
 	{
 		set_loot_seed(&ctx, lootSeed);
 		generate_loot(&ctx);
@@ -108,9 +108,34 @@ int test_desert_temple()
 	free_loot_table(&ctx);
 }
 
+void test_ancient_city()
+{
+	LootTableContext ctx;
+
+	FILE* file = fopen("src/examples/ancient_city.json", "r");
+	int ret = init_loot_table_file(file, &ctx, (MCVersion)v1_21);
+	fclose(file);
+	if (ret != 0) {
+		fprintf(stderr, "Error initializing loot table\n");
+		return ret;
+	}
+
+	int64_t lootSeed = 217704587079581LL;
+	set_loot_seed(&ctx, lootSeed);
+	generate_loot(&ctx);
+	print_loot(&ctx);
+
+	free_loot_table(&ctx);
+}
+
+extern void test_enchant_vec();
+extern void test_enchant_vec_2();
+
 int main()
 {
-	test_desert_temple();
+	test_ancient_city();
+	//test_enchant_vec_2();
+	//test_desert_temple();
 	//test_shipwreck();
 	//test_ominous_vault();
 }

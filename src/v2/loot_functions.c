@@ -599,7 +599,7 @@ static int get_max_level(const Enchantment enchantment)
 		5, 1, 3, // tools + unbreaking
 		3, 3, // fishing rods
 		5, 2, 1, 1, // bows
-		3, 3, 4, // crossbows
+		3, 1, 4, // crossbows
 		5, 3, 3, 1, // trident
 		5, 4, 3, // mace
 		1, 3, 1, 1 // general
@@ -813,7 +813,7 @@ void create_enchant_with_levels(LootFunction* lf, const MCVersion version, const
 		// create a vector for the current level
 		int vector_size = get_enchant_level_vector(level, applicable, num_applicable, NULL);
 		int* vec = malloc((3 * vector_size + 2) * sizeof(int));
-		get_enchant_level_vector(level, applicable, num_applicable, vec); // todo
+		get_enchant_level_vector(level, applicable, num_applicable, vec);
 		lf->varparams_int_arr[level+1] = vec;
 	}
 
@@ -887,14 +887,62 @@ const char* get_enchantment_name(const Enchantment enchantment)
 
 void test_enchant_vec()
 {
-	int applicable[64];
-	int num_applicable = get_applicable_enchantments(HELMET, v1_21, applicable, 0);
+	LootFunction lf;
+	create_enchant_with_levels(&lf, v1_21, "minecraft:iron_leggings", LEGGINGS, 20, 39, 1);
 
-	int vec[128];
-	int size = get_enchant_level_vector(29, applicable, num_applicable, vec);
+	printf("const int max_enchants[%d] = { ", lf.varparams_int_arr_size - 1);
 
-	for (int i = 0; i < size; i++)
-	{
-		printf("%s %d %d\n", get_enchantment_name((Enchantment)vec[3 * i + 2]), vec[3 * i + 3], vec[3 * i + 4]);
+	for (int i = 1; i < lf.varparams_int_arr_size; i++) {
+		int* vec = lf.varparams_int_arr[i];
+		int totalWeight = vec[1];
+
+		int enchantmentVec[128];
+		int vecSize = vec[0];
+		memcpy(enchantmentVec, vec + 2, sizeof(int) * vecSize * 3);
+
+		int numEnchants = 0;
+		uint64_t rand = 0;
+
+		while (vecSize > 0)
+		{
+			remove_incompatible_enchantments(0, enchantmentVec, &vecSize, &totalWeight);
+			choose_enchantment(&rand, enchantmentVec, vecSize, totalWeight);
+			numEnchants++;
+		}
+
+		printf(i != lf.varparams_int_arr_size - 1 ? "%d, " : "%d ", numEnchants);
+		//printf("Level %d: %d enchantments\n", i-1, numEnchants);
 	}
+	printf("};\n");
+
+	// free the allocated memory
+	for (int i = 0; i < lf.varparams_int_arr_size; i++)
+		free(lf.varparams_int_arr[i]);
+	free(lf.varparams_int_arr);
+
+	//int applicable[64];
+	//int num_applicable = get_applicable_enchantments(HELMET, v1_21, applicable, 0);
+
+	//int vec[128];
+	//int size = get_enchant_level_vector(29, applicable, num_applicable, vec);
+
+	//for (int i = 0; i < size; i++)
+	//{
+	//	printf("%s %d %d\n", get_enchantment_name((Enchantment)vec[3 * i + 2]), vec[3 * i + 3], vec[3 * i + 4]);
+	//}
+}
+
+void test_enchant_vec_2()
+{
+	LootFunction lf;
+	create_enchant_randomly(&lf, v1_21, BOOK, 1);
+
+	printf("const bool extra_skip[%d] = { ", lf.varparams_int[0]);
+	for (int i = 0; i < lf.varparams_int[0]; i++)
+	{
+		int enchantment = lf.varparams_int[1 + 2 * i];
+		int max_level = lf.varparams_int[1 + 2 * i + 1];
+		printf(max_level > 1 ? "1, " : "0, ");
+	}
+	printf("};\n");
 }

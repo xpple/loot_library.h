@@ -128,12 +128,33 @@ void test_ancient_city()
 	free_loot_table(&ctx);
 }
 
+void test_bt()
+{
+	LootTableContext ctx;
+
+	FILE* file = fopen("src/examples/buried_treasure.json", "r");
+	int ret = init_loot_table_file(file, &ctx, (MCVersion)v1_21);
+	fclose(file);
+	if (ret != 0) {
+		fprintf(stderr, "Error initializing loot table\n");
+		return ret;
+	}
+
+	int64_t lootSeed = 6249925021267101877ULL;
+	set_loot_seed(&ctx, lootSeed);
+	generate_loot(&ctx);
+	print_loot(&ctx);
+
+	free_loot_table(&ctx);
+}
+
 extern void test_enchant_vec();
 extern void test_enchant_vec_2();
 
 int main()
 {
-	test_ancient_city();
+	test_bt();
+	//test_ancient_city();
 	//test_enchant_vec_2();
 	//test_desert_temple();
 	//test_shipwreck();

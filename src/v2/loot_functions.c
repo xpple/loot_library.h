@@ -946,3 +946,17 @@ void test_enchant_vec_2()
 	}
 	printf("};\n");
 }
+
+#include "stdio.h"
+void print_enchant_randomly_rp()
+{
+	LootFunction lf;
+	create_enchant_randomly(&lf, v1_21, BOOK, 1);
+	
+	for (int i = 0; i < lf.varparams_int[0]; i++)
+	{
+		int enchantment = lf.varparams_int[1 + 2 * i];
+		int max_level = lf.varparams_int[1 + 2 * i + 1];
+		printf("%s (max level %d)\n", get_enchantment_name(enchantment), max_level);
+	}
+}

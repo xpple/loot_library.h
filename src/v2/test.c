@@ -148,12 +148,35 @@ void test_bt()
 	free_loot_table(&ctx);
 }
 
+void test_bastion_other() {
+	LootTableContext ctx;
+
+	FILE* file = fopen("src/examples/bastion_other.json", "r");
+	int ret = init_loot_table_file(file, &ctx, (MCVersion)v1_21);
+	fclose(file);
+	if (ret != 0) {
+		fprintf(stderr, "Error initializing loot table\n");
+		return ret;
+	}
+
+	int64_t lootSeed = -7285891695222447769LL;
+	set_loot_seed(&ctx, lootSeed);
+	generate_loot(&ctx);
+	print_loot(&ctx);
+
+	free_loot_table(&ctx);
+}
+
+
 extern void test_enchant_vec();
 extern void test_enchant_vec_2();
+extern void print_enchant_randomly_rp();
 
 int main()
 {
-	test_bt();
+	test_bastion_other();
+	//print_enchant_randomly_rp();
+	//test_bt();
 	//test_ancient_city();
 	//test_enchant_vec_2();
 	//test_desert_temple();
